@@ -1,0 +1,83 @@
+name: CI Orchestrator
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/pull_request_template.md'
+      - '.github/labeler.yml'
+  pull_request:
+    branches: [ "main", "master" ]
+    paths-ignore:
+      - '**.md'
+
+jobs:
+  lint-backend:
+    name: Lint Backend (Ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: 'pip'
+      - name: Install Ruff
+        run: pip install ruff
+      - name: Run Ruff
+        run: ruff check backend/
+
+  lint-frontend:
+    name: Lint Frontend (ESLint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        run: cd frontend && npm ci
+      - name: Audit vulnerabilities
+        run: cd frontend && npm audit fix --force || echo "Audit fix applied best effort"
+      - name: Run ESLint
+        run: cd frontend && npm run lint
+
+  test-unit:
+    name: Unit Tests
+    needs: [lint-backend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+            cd backend
+            pip install .[dev]
+      - name: Run Tests
+        run: |
+            cd backend
+            pytest
+
+  build-validation:
+    name: Validate Docker Build
+    needs: [test-unit, lint-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build (No Push)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: er-j-manager:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

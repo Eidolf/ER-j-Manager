@@ -1,0 +1,19 @@
+services:
+  app:
+    build: .
+    image: er-j-manager:latest
+    container_name: jdownloader-manager
+    network_mode: "host"
+    environment:
+      - PROJECT_NAME=JDownloader Manager
+      - LOG_LEVEL=INFO
+      - PORT=13040
+    command: uvicorn src.main:app --host 0.0.0.0 --port 13040
+    volumes:
+      - ./backend/data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:13040/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3

@@ -1,0 +1,21 @@
+# .github/labeler.yml
+
+frontend:
+  - changed-files:
+    - any-glob-to-any-file: 'frontend/**'
+
+backend:
+  - changed-files:
+    - any-glob-to-any-file: 'backend/**'
+
+docker:
+  - changed-files:
+    - any-glob-to-any-file: ['Dockerfile', 'docker-compose.yml', 'ops/**']
+
+ci:
+  - changed-files:
+    - any-glob-to-any-file: ['.github/workflows/**']
+
+documentation:
+  - changed-files:
+    - any-glob-to-any-file: ['**.md', 'docs/**']

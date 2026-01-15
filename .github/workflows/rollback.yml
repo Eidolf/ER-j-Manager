@@ -1,0 +1,32 @@
+name: Rollback Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_to_delete:
+        description: 'Tag to delete (e.g. v2024.1.1)'
+        required: true
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Delete Release and Tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=${{ inputs.tag_to_delete }}
+          echo "Deleting release associated with $TAG..."
+          gh release delete $TAG -y || echo "Release not found, skipping."
+          
+          echo "Deleting tag $TAG..."
+          git push --delete origin $TAG || echo "Tag not found or already deleted."
+          
+      - name: Sanity Check
+        run: echo "Rollback of $TAG initiated. Please manually verify Docker image deletion if needed."

@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-cyber-black text-gray-200 antialiased font-sans;
+  }
+}
+
+.cyber-grid {
+  background-size: 40px 40px;
+  background-image: linear-gradient(to right, #1f2937 1px, transparent 1px),
+    linear-gradient(to bottom, #1f2937 1px, transparent 1px);
+  mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+}
+
+@layer utilities {
+  .text-shadow-neon {
+    text-shadow: 0 0 5px theme('colors.cyber.neon'), 0 0 10px theme('colors.cyber.neon');
+  }
+}
+
+/* Spacey Glass Input with Animated Gradient Border */
+.glass-input-wrapper {
+  position: relative;
+  border-radius: 0.5rem;
+  /* rounded */
+  overflow: hidden;
+}
+
+.glass-input-wrapper::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg,
+      transparent 0deg,
+      theme('colors.cyber.neon') 90deg,
+      transparent 180deg,
+      theme('colors.cyber.purple') 270deg,
+      transparent 360deg);
+  animation: border-rotate 4s linear infinite;
+  z-index: 0;
+}
+
+.glass-input {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  background: rgba(15, 23, 42, 0.6);
+  /* dark glass */
+  backdrop-filter: blur(8px);
+  border: none;
+  outline: none;
+  color: white;
+  border-radius: 0.4rem;
+  /* slightly less than wrapper */
+}
+
+@keyframes border-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Comet Border Effect */
+.comet-border {
+  position: relative;
+  background: theme('colors.cyber.card');
+  border-radius: 0.75rem;
+  z-index: 1;
+}
+
+.comet-border::before,
+.comet-border::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 0.85rem;
+  background: conic-gradient(from 0deg,
+      transparent 0deg,
+      theme('colors.cyber.neon') 45deg,
+      transparent 90deg,
+      transparent 180deg,
+      theme('colors.cyber.purple') 225deg,
+      transparent 270deg);
+  z-index: -1;
+  animation: border-rotate var(--comet-duration, 6s) linear infinite;
+  animation-delay: var(--comet-delay, 0s);
+}
+
+.comet-border::after {
+  filter: blur(8px);
+  opacity: 0.7;
+  animation-duration: var(--comet-duration, 6s);
+  animation-delay: var(--comet-delay, 0s);
+}
+
+.neon-border {
+  box-shadow: 0 0 5px theme('colors.cyber.neon'), inset 0 0 5px theme('colors.cyber.neon');
+}

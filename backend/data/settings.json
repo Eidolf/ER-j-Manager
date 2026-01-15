@@ -1,0 +1,6 @@
+{
+    "jd_host": "127.0.0.1",
+    "jd_port": 3128,
+    "use_mock": false,
+    "admin_password": "admin"
+}

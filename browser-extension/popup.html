@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>JDownloader Manager CNL Bridge</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            width: 350px;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header img {
+            width: 32px;
+            height: 32px;
+        }
+
+        .header h1 {
+            font-size: 14px;
+            font-weight: 600;
+            background: linear-gradient(90deg, #22d3ee, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .status-indicator.connected {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+        }
+
+        .status-indicator.disconnected {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-indicator.connected .status-dot {
+            background: #22c55e;
+            box-shadow: 0 0 8px #22c55e;
+        }
+
+        .status-indicator.disconnected .status-dot {
+            background: #ef4444;
+            box-shadow: 0 0 8px #ef4444;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: #9ca3af;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #a855f7;
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+        }
+
+        input::placeholder {
+            color: #6b7280;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #a855f7;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            text-transform: none;
+            font-size: 13px;
+            color: #e0e0e0;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #a855f7, #6366f1);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .message.success {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .help-text {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <img src="icons/icon48.png" alt="Logo">
+        <h1>JDownloader Manager<br>CNL Bridge</h1>
+    </div>
+
+    <div id="status" class="status-indicator disconnected">
+        <div class="status-dot"></div>
+        <span id="statusText">Not Connected</span>
+    </div>
+
+    <div class="form-group">
+        <label>Server URL</label>
+        <input type="url" id="serverUrl" placeholder="https://your-server.com:13040">
+        <div class="help-text">Full URL to your JDownloader Manager server</div>
+    </div>
+
+    <div class="form-group">
+        <label>Auth Token</label>
+        <input type="password" id="token" placeholder="Your authentication token">
+        <div class="help-text">JWT token from login</div>
+    </div>
+
+    <div class="checkbox-group">
+        <input type="checkbox" id="enabled" checked>
+        <label for="enabled">Enable CNL forwarding</label>
+    </div>
+
+    <div class="buttons">
+        <button class="btn-secondary" id="testBtn">Test</button>
+        <button class="btn-primary" id="saveBtn">Save</button>
+    </div>
+
+    <div id="message" class="message" style="display: none;"></div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>
