@@ -1,5 +1,5 @@
 # Stage 1: Build Frontend
-FROM node:20-alpine as frontend-builder
+FROM node:24-alpine as frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm ci
@@ -7,7 +7,7 @@ COPY frontend/ .
 RUN npm run build
 
 # Stage 2: Runtime
-FROM python:3.10-slim as runtime
+FROM python:3.14-slim as runtime
 
 WORKDIR /app
 
