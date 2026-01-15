@@ -107,4 +107,15 @@ class MockJDownloaderAPI(JDownloaderAPI):
     async def add_dlc(self, file_content: bytes) -> str:
         return "ok"
 
+    async def restart_jd(self) -> None:
+        print("[Mock] Restarting JD")
+        pass
+
+    async def shutdown_jd(self) -> None:
+        print("[MockJD] Shutting down...")
+
+    async def get_myjd_connection_status(self) -> dict:
+        return {"online": True, "status": "Connected (Mock)"}
+        pass
+
 jd_api = MockJDownloaderAPI()

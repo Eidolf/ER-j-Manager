@@ -7,6 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
+from pydantic import BaseModel
 from src.api import deps
 from src.core import security
 from src.core.config import settings
@@ -51,6 +52,61 @@ async def login_for_access_token(
         data={"sub": form_data.username}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+class PasswordChangeRequest(BaseModel):
+    old_password: str
+    new_password: str
+
+@router.post("/auth/change-password")
+async def change_password(
+    payload: PasswordChangeRequest,
+    current_user: Annotated[User, Depends(deps.get_current_user)],
+):
+    current_settings = settings_manager.load_settings()
+    
+    # Verify old password
+    if payload.old_password != current_settings.admin_password:
+        raise HTTPException(status_code=400, detail="Incorrect old password")
+        
+    # Update password
+    current_settings.admin_password = payload.new_password
+    settings_manager.save_settings(current_settings)
+    
+    return {"status": "password_updated"}
+
+@router.get("/settings/help/docs")
+async def get_api_docs(
+    current_user: Annotated[User, Depends(deps.get_current_user)],
+):
+    """Serve the JDownloader API Reference markdown file."""
+    try:
+        # Resolve path robustly for both Local (backend/src/...) and Docker (src/...)
+        current_file = Path(__file__).resolve()
+        
+        # Candidates for project root:
+        # 1. Docker: /app/src/api/v1/router.py -> 4 parents -> /app
+        # 2. Local:  .../backend/src/api/v1/router.py -> 5 parents -> .../project
+        
+        candidates = [
+            current_file.parent.parent.parent.parent,          # Docker (/app)
+            current_file.parent.parent.parent.parent.parent,   # Local (.../ER-j-Manager)
+        ]
+        
+        docs_path = None
+        for root in candidates:
+            p = root / "docs" / "jdownloader_api_reference.md"
+            if p.exists():
+                docs_path = p
+                break
+        
+        if not docs_path or not docs_path.exists():
+            # Fallback debug info
+            debug_paths = [str(root / "docs") for root in candidates]
+            return {"text": f"# Error\nDocumentation file not found.\nChecked paths:\n" + "\n".join(debug_paths)}
+            
+        return {"text": docs_path.read_text(encoding="utf-8")}
+    except Exception as e:
+        return {"text": f"# Error\nFailed to load documentation: {e}"}
 
 @router.get("/downloads", response_model=list[Package])
 async def get_downloads(
@@ -249,12 +305,20 @@ async def get_system_status(
 ):
     # Check JD Connection
     jd_online = False
+    myjd_status = {"online": False, "status": "Unknown"}
     try:
         # Simple check, help or version
         await api.get_help()
         jd_online = True
-    except:
+    except Exception:
         jd_online = False
+
+    if jd_online:
+        try:
+            # Get detailed MyJD Status
+            myjd_status = await api.get_myjd_connection_status()
+        except:
+             myjd_status = {"online": False, "status": "Unknown (Error)"}
 
     # Check Buffer (now contains package objects)
     buffer_file = get_buffer_file()
@@ -284,8 +348,25 @@ async def get_system_status(
 
     return {
         "jd_online": jd_online,
-        "buffer_count": buffer_count
+        "buffer_count": buffer_count,
+        "myjd_connection": myjd_status
     }
+
+@router.post("/system/restart")
+async def restart_system(
+    current_user: Annotated[User, Depends(deps.get_current_user)],
+    api: Annotated[MockJDownloaderAPI, Depends(deps.get_jd_api)]
+):
+    await api.restart_jd()
+    return {"status": "restarting"}
+
+@router.post("/system/shutdown")
+async def shutdown_system(
+    current_user: Annotated[User, Depends(deps.get_current_user)],
+    api: Annotated[MockJDownloaderAPI, Depends(deps.get_jd_api)]
+):
+    await api.shutdown_jd()
+    return {"status": "shutting_down"}
 
 @router.post("/system/buffer/replay")
 async def system_buffer_replay(

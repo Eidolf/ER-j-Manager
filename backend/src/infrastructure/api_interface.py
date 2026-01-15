@@ -36,3 +36,16 @@ class JDownloaderAPI(ABC):
     @abstractmethod
     async def add_dlc(self, file_content: bytes) -> str:
         pass
+
+    @abstractmethod
+    async def restart_jd(self) -> None:
+        pass
+
+    @abstractmethod
+    async def shutdown_jd(self) -> None:
+        pass
+
+    @abstractmethod
+    async def get_myjd_connection_status(self) -> dict:
+        """Get MyJDownloader connection status."""
+        pass

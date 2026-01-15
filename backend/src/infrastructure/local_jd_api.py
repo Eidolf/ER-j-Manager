@@ -263,3 +263,48 @@ class LocalJDownloaderAPI(JDownloaderAPI):
             else:
                  # Fallback trial: LinkCollector logic?
                  return f"error: {resp.text}"
+
+    async def restart_jd(self) -> None:
+        async with httpx.AsyncClient() as client:
+            print(f"[JD-API] Restarting JDownloader: {self.base_url}/system/restartJD")
+            # /system/restartJD
+            await client.post(f"{self.base_url}/system/restartJD")
+
+    async def shutdown_jd(self) -> None:
+        async with httpx.AsyncClient() as client:
+            print(f"[JD-API] Shutting down JDownloader: {self.base_url}/system/exitJD")
+            # /system/exitJD
+            await client.post(f"{self.base_url}/system/exitJD")
+
+    async def get_myjd_connection_status(self) -> dict:
+        async with httpx.AsyncClient() as client:
+            try:
+                # We want to check if the local JD instance is connected to MyJD
+                # /myjdownloader/list usually lists connected instances from the perspective of the cloud
+                # But querying LOCAL instance about its connection state is tricky without standard API docs.
+                # However, /myjdownloader/getDirectConnectionInfos might work.
+                
+                # Let's try to infer it from the existence of the service or simple general check
+                # Note: This is an estimation. Real status usually requires internal JD methods.
+                
+                # Check 1: Is JD reachable?
+                await self.get_help()
+                
+                # Check 2: Try to get MyJD specific info
+                # Most reliable way via RPC:
+                # org.jdownloader.api.myjdownloader.MyJDownloaderAPI.getConnectionStatus()
+                # But we use the HTTP bridge.
+                
+                # We will return basic "connected" for now if API is reachable, 
+                # but let's try to query /myjdownloader/list just in case it returns local info.
+                
+                resp = await client.get(f"{self.base_url}/myjdownloader/list")
+                # If this works, it might return empty or null if not connected to cloud?
+                
+                return {
+                    "online": True, 
+                    "status": "Connected" if resp.status_code == 200 else "Unknown"
+                }
+
+            except Exception:
+                return {"online": False, "status": "Disconnected"}

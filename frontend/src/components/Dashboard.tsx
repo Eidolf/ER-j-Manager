@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { api, type Package } from '../api/client';
-import { Play, Pause, Plus, Download, Settings, LogOut, FolderInput, FileUp } from 'lucide-react';
+import { Play, Pause, Plus, Download, Settings, LogOut, FolderInput, FileUp, Power, RefreshCw, Info, X, Server, Globe } from 'lucide-react';
 import { SettingsModal } from './SettingsModal';
 
-// Buffer types
 interface BufferPackage {
     package: string;
     links: string[];
@@ -59,10 +58,41 @@ export const Dashboard: React.FC = () => {
 
     // Close context menu on click elsewhere
     useEffect(() => {
-        const handleClick = () => setContextMenu({ ...contextMenu, visible: false });
+        const handleClick = () => {
+            setContextMenu({ ...contextMenu, visible: false });
+            setStatusMenuOpen(false);
+        };
         document.addEventListener('click', handleClick);
         return () => document.removeEventListener('click', handleClick);
     }, [contextMenu]);
+
+    const [statusMenuOpen, setStatusMenuOpen] = useState(false);
+    const [showInfoModal, setShowInfoModal] = useState(false);
+    const [myjdStatus, setMyjdStatus] = useState<{ online: boolean; status: string } | null>(null);
+
+    const handleRestart = async () => {
+        if (!confirm("Restart JDownloader? This will interrupt active downloads.")) return;
+        try {
+            await api.post('/system/restart');
+            alert('Restart command sent. JDownloader will reboot.');
+            setStatusMenuOpen(false);
+            fetchData(); // Use fetchData to refresh status
+        } catch (e: unknown) {
+            alert(`Restart Failed: ${getErrorMessage(e)}`);
+        }
+    };
+
+    const handleShutdown = async () => {
+        if (!confirm("Shutdown JDownloader? You will need to start it manually again!")) return;
+        try {
+            await api.post('/system/shutdown');
+            alert('Shutdown command sent. Extension and JDM will lose connection.');
+            setStatusMenuOpen(false);
+            fetchData(); // Use fetchData to refresh status
+        } catch (e: unknown) {
+            alert(`Shutdown Failed: ${getErrorMessage(e)}`);
+        }
+    };
 
 
 
@@ -95,39 +125,33 @@ export const Dashboard: React.FC = () => {
         }
     };
 
-    const fetchStatus = async () => {
-        try {
-            const res = await api.get('/system/status');
-            setBufferCount(res.data.buffer_count);
-            setIsConnected(res.data.jd_online);
-        } catch {
-            setIsConnected(false);
-        }
-    };
-
     // Initial fetch of package data
     const fetchData = async () => {
         try {
-            if (activeTab === 'downloads') {
-                const res = await api.get('/downloads');
-                setPackages(res.data);
-            } else {
-                const res = await api.get('/linkgrabber');
-                setLinkGrabberPackages(res.data);
+            const [pkgRes, linkRes, statusRes] = await Promise.all([
+                api.get('/downloads'),
+                api.get('/linkgrabber'),
+                api.get('/system/status')
+            ]);
+
+            setPackages(pkgRes.data);
+            setLinkGrabberPackages(linkRes.data);
+            setIsConnected(statusRes.data.jd_online);
+            setBufferCount(statusRes.data.buffer_count || 0);
+            if (statusRes.data.myjd_connection) {
+                setMyjdStatus(statusRes.data.myjd_connection);
             }
         } catch (error) {
-            console.error("Failed to fetch packages", error);
-            // Don't set connected false here, rely on status endpoint
+            console.error("Failed to fetch data", error);
+            setIsConnected(false); // Set connected to false if any fetch fails
         }
     };
 
     useEffect(() => {
         fetchData();
-        fetchStatus();
         fetchBufferDetails();
         const interval = setInterval(() => {
             fetchData();
-            fetchStatus();
             fetchBufferDetails();
         }, 2000);
         return () => clearInterval(interval);
@@ -235,6 +259,46 @@ export const Dashboard: React.FC = () => {
 
     return (
         <div className="min-h-screen p-8 text-gray-200 font-sans relative overflow-hidden">
+            {/* Info Modal */}
+            {showInfoModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
+                    <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 max-w-sm w-full shadow-2xl relative">
+                        <button
+                            onClick={() => setShowInfoModal(false)}
+                            className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                            <Info size={20} className="text-cyber-neon" /> Connection Info
+                        </h3>
+
+                        <div className="space-y-4">
+                            <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                                <div className="text-xs text-gray-400 mb-1 flex items-center gap-1"><Server size={12} /> JDownloader Core</div>
+                                <div className="flex items-center gap-2">
+                                    <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                    <span className={isConnected ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>
+                                        {isConnected ? 'Online' : 'Offline'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                                <div className="text-xs text-gray-400 mb-1 flex items-center gap-1"><Globe size={12} /> My.JDownloader Cloud</div>
+                                <div className="flex items-center gap-2">
+                                    <div className={`w-2 h-2 rounded-full ${myjdStatus?.online ? 'bg-green-500' : 'bg-gray-500'}`}></div>
+                                    <span className={myjdStatus?.online ? 'text-green-400 font-bold' : 'text-gray-400 font-bold'}>
+                                        {myjdStatus?.status || 'Unknown'}
+                                    </span>
+                                </div>
+                                {!isConnected && <div className="text-xs text-gray-500 mt-1">Requires JD Core to be online</div>}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* Background elements preserved by outer layout usually, assuming standalone component structure here */}
             {/* Grid Background */}
             <div className="fixed inset-0 cyber-grid z-0 pointer-events-none" />
@@ -303,11 +367,62 @@ export const Dashboard: React.FC = () => {
                         <button onClick={() => setSettingsOpen(true)} className="p-2 bg-gray-700/50 text-gray-300 border border-gray-600 rounded hover:bg-gray-700 hover:text-cyber-neon transition-all">
                             <Settings size={20} />
                         </button>
-                        <div className="flex items-center bg-gray-900/50 rounded-full px-4 py-2 border border-gray-700 mx-4" title={isConnected ? "JDownloader Online" : "JDownloader Offline - Buffering Mode"}>
-                            <div className={`w-3 h-3 rounded-full mr-2 ${isConnected ? "bg-green-500 shadow-[0_0_8px_#22c55e]" : "bg-red-500 shadow-[0_0_8px_#ef4444] animate-pulse"}`}></div>
-                            <span className={`text-sm font-medium ${isConnected ? "text-green-400" : "text-red-400"}`}>
-                                {isConnected ? "JD Online" : "JD Offline"}
-                            </span>
+                        <div className="flex items-center gap-4">
+                            {/* Status Badge Group */}
+                            <div className="flex items-center gap-2">
+                                <div className="relative">
+                                    <div
+                                        className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-2 transition-all ${isConnected ? 'bg-green-500/20 text-green-400 border-green-500/50 cursor-pointer hover:bg-green-500/30' : 'bg-red-500/20 text-red-400 border-red-500/50 cursor-pointer'}`}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setStatusMenuOpen(!statusMenuOpen);
+                                        }}
+                                    >
+                                        <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div>
+                                        {isConnected ? 'JD Online' : 'JD Offline'}
+                                    </div>
+
+                                    {/* Power Menu Popover */}
+                                    {statusMenuOpen && (
+                                        <div className="absolute top-full mt-2 left-0 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                            <div className="p-2 space-y-1">
+                                                <button
+                                                    onClick={() => {
+                                                        setShowInfoModal(true);
+                                                        setStatusMenuOpen(false);
+                                                    }}
+                                                    className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 rounded flex items-center gap-2 transition-colors mb-2 border-b border-gray-800"
+                                                >
+                                                    <Info size={14} className="text-cyber-neon" /> Connection Info
+                                                </button>
+
+                                                {isConnected ? (
+                                                    <>
+                                                        <button
+                                                            onClick={handleRestart}
+                                                            className="w-full text-left px-3 py-2 text-sm text-yellow-500 hover:bg-yellow-500/10 rounded flex items-center gap-2 transition-colors"
+                                                        >
+                                                            <RefreshCw size={14} /> Restart JD
+                                                        </button>
+                                                        <button
+                                                            onClick={handleShutdown}
+                                                            className="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded flex items-center gap-2 transition-colors"
+                                                        >
+                                                            <Power size={14} /> Shutdown JD
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <div className="text-xs text-gray-500 p-2 text-center">
+                                                        JDownloader is offline.<br />Cannot control power.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+
+                            </div>
                         </div>
 
                         <button onClick={handleLogout} className="p-2 bg-red-500/10 text-red-400 border border-red-500/50 rounded hover:bg-red-500/20 hover:text-red-200 transition-all" title="Logout">
@@ -336,7 +451,7 @@ export const Dashboard: React.FC = () => {
                                             try {
                                                 const res = await api.post('/system/buffer/replay');
                                                 alert(`Replay triggered. ${res.data.status}`);
-                                                fetchStatus();
+                                                fetchData();
                                                 fetchData();
                                                 fetchBufferDetails();
                                             } catch (e: unknown) {
@@ -353,7 +468,7 @@ export const Dashboard: React.FC = () => {
                                             if (confirm('Clear entire buffer? This cannot be undone.')) {
                                                 try {
                                                     await api.delete('/buffer/clear');
-                                                    fetchStatus();
+                                                    fetchData();
                                                     fetchBufferDetails();
                                                 } catch (e: unknown) {
                                                     alert(`Clear Failed: ${getErrorMessage(e)}`);
@@ -392,7 +507,7 @@ export const Dashboard: React.FC = () => {
                                                 onClick={async () => {
                                                     try {
                                                         await api.delete(`/buffer/package/${index}`);
-                                                        fetchStatus();
+                                                        fetchData();
                                                         fetchBufferDetails();
                                                     } catch (e: unknown) {
                                                         alert(`Delete Failed: ${getErrorMessage(e)}`);
@@ -420,7 +535,7 @@ export const Dashboard: React.FC = () => {
                                                 onClick={async () => {
                                                     try {
                                                         await api.delete(`/buffer/dlc/${dlc.filename}`);
-                                                        fetchStatus();
+                                                        fetchData();
                                                         fetchBufferDetails();
                                                     } catch (e: unknown) {
                                                         alert(`Delete Failed: ${getErrorMessage(e)}`);

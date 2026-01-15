@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { X, Save, Server, Plug, Download, Settings as SettingsIcon, Book, Copy, Check } from 'lucide-react';
+import { X, Save, Server, Plug, Download, Settings as SettingsIcon, Book, Copy, Check, Shield, AlertTriangle } from 'lucide-react';
 
 interface Settings {
     jd_host: string;
@@ -13,6 +13,165 @@ interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
 }
+
+const SecurityTabContent = () => {
+    const [oldPassword, setOldPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    // Password Strength Calculation
+    const getStrength = (pass: string) => {
+        let score = 0;
+        if (!pass) return 0;
+        if (pass.length > 8) score += 1;
+        if (pass.length > 12) score += 1;
+        if (/[A-Z]/.test(pass)) score += 1;
+        if (/[0-9]/.test(pass)) score += 1;
+        if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+        return score;
+    };
+
+    const strength = getStrength(newPassword);
+
+    // UI Helpers for Strength
+    const getStrengthColor = (s: number) => {
+        if (s < 2) return 'bg-red-500';
+        if (s < 4) return 'bg-yellow-500';
+        return 'bg-green-500';
+    };
+
+    const getStrengthText = (s: number) => {
+        if (s < 2) return 'Weak';
+        if (s < 4) return 'Medium';
+        return 'Strong';
+    };
+
+    const handleChangePassword = async () => {
+        setError('');
+        setSuccess('');
+
+        if (newPassword !== confirmPassword) {
+            setError("New passwords do not match.");
+            return;
+        }
+
+        if (strength < 2) {
+            setError("Password is too weak.");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await api.post('/auth/change-password', {
+                old_password: oldPassword,
+                new_password: newPassword
+            });
+            setSuccess("Password updated successfully!");
+            setOldPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+            // Optional: Close modal after delay?
+        } catch (err: any) {
+            setError(err.response?.data?.detail || "Failed to change password.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="space-y-6 text-gray-300 text-sm">
+            <div className="bg-gradient-to-r from-red-900/20 to-pink-900/10 p-4 rounded-xl border border-red-500/30">
+                <div className="flex items-center gap-2 mb-2">
+                    <Shield className="text-red-400" size={20} />
+                    <h3 className="text-lg font-bold text-white neon-text-red">Change Admin Password</h3>
+                </div>
+                <p className="text-gray-400">
+                    Update the password used to access this dashboard.
+                </p>
+            </div>
+
+            <div className="space-y-4 max-w-md mx-auto">
+                {error && (
+                    <div className="p-3 bg-red-500/10 border border-red-500/50 text-red-400 rounded flex items-center gap-2">
+                        <AlertTriangle size={16} /> {error}
+                    </div>
+                )}
+                {success && (
+                    <div className="p-3 bg-green-500/10 border border-green-500/50 text-green-400 rounded flex items-center gap-2">
+                        <Check size={16} /> {success}
+                    </div>
+                )}
+
+                <div>
+                    <label className="block text-sm text-gray-400 mb-1">Current Password</label>
+                    <input
+                        type="password"
+                        value={oldPassword}
+                        onChange={(e) => setOldPassword(e.target.value)}
+                        className="w-full bg-black/40 border border-gray-700 rounded p-2 text-white focus:border-cyber-purple focus:outline-none transition-colors"
+                        placeholder="••••••"
+                    />
+                </div>
+
+                <div className="border-t border-gray-800 my-4"></div>
+
+                <div>
+                    <label className="block text-sm text-gray-400 mb-1">New Password</label>
+                    <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full bg-black/40 border border-gray-700 rounded p-2 text-white focus:border-cyber-purple focus:outline-none transition-colors"
+                        placeholder="••••••••"
+                    />
+                    {/* Strength Meter */}
+                    {newPassword && (
+                        <div className="mt-2">
+                            <div className="flex justify-between text-xs mb-1">
+                                <span className="text-gray-500">Strength</span>
+                                <span className={`${getStrengthColor(strength).replace('bg-', 'text-')}`}>{getStrengthText(strength)}</span>
+                            </div>
+                            <div className="h-1 w-full bg-gray-800 rounded-full overflow-hidden">
+                                <div
+                                    className={`h-full transition-all duration-300 ${getStrengthColor(strength)}`}
+                                    style={{ width: `${(strength / 5) * 100}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div>
+                    <label className="block text-sm text-gray-400 mb-1">Confirm New Password</label>
+                    <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className={`w-full bg-black/40 border border-gray-700 rounded p-2 text-white focus:outline-none transition-colors ${confirmPassword && newPassword !== confirmPassword ? 'border-red-500' : 'focus:border-cyber-purple'}`}
+                        placeholder="••••••••"
+                    />
+                    {confirmPassword && newPassword !== confirmPassword && (
+                        <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
+                    )}
+                </div>
+
+                <button
+                    onClick={handleChangePassword}
+                    disabled={loading || !oldPassword || !newPassword || strength < 2 || newPassword !== confirmPassword}
+                    className={`w-full py-2.5 rounded font-bold flex items-center justify-center gap-2 transition-all mt-4
+                        ${loading || !oldPassword || !newPassword || strength < 2 || newPassword !== confirmPassword
+                            ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                            : 'bg-cyber-purple hover:bg-cyber-purple/80 text-white shadow-lg hover:shadow-cyan-500/20'}`}
+                >
+                    {loading ? 'Updating...' : <><Save size={18} /> Update Password</>}
+                </button>
+            </div>
+        </div>
+    );
+};
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const [settings, setSettings] = useState<Settings>({
@@ -35,16 +194,68 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 .then(res => setSettings(res.data))
                 .catch(err => console.error("Failed to load settings", err))
                 .finally(() => setLoading(false));
-        }
-    }, [isOpen]);
 
-    useEffect(() => {
-        if (isOpen && activeTab === 'api_info') {
+            // Pre-fetch default help
             api.get('/settings/help')
                 .then(res => setHelpContent(res.data.text))
                 .catch(() => setHelpContent('Failed to load help.'));
         }
-    }, [isOpen, activeTab]);
+    }, [isOpen]);
+
+    const [apiInfoMode, setApiInfoMode] = useState<'raw' | 'docs'>('raw');
+    const [docsContent, setDocsContent] = useState('');
+
+    useEffect(() => {
+        if (isOpen && activeTab === 'api_info' && apiInfoMode === 'docs' && !docsContent) {
+            setLoading(true);
+            api.get('/settings/help/docs')
+                .then(res => setDocsContent(res.data.text))
+                .catch(() => setDocsContent('# Error\nFailed to load docs.'))
+                .finally(() => setLoading(false));
+        }
+    }, [isOpen, activeTab, apiInfoMode]);
+
+    // Simple Markdown Renderer (Headers, Bold, Tables)
+    const SimpleMarkdown = ({ content }: { content: string }) => {
+        if (!content) return null;
+
+        // Split by lines
+        return (
+            <div className="space-y-2 text-sm text-gray-300">
+                {content.split('\n').map((line, i) => {
+                    // Headers
+                    if (line.startsWith('# ')) return <h1 key={i} className="text-xl font-bold text-cyber-neon mt-4 border-b border-gray-700 pb-1">{line.replace('# ', '')}</h1>;
+                    if (line.startsWith('## ')) return <h2 key={i} className="text-lg font-bold text-white mt-4 mb-2">{line.replace('## ', '')}</h2>;
+                    if (line.startsWith('### ')) return <h3 key={i} className="text-md font-bold text-gray-200 mt-3">{line.replace('### ', '')}</h3>;
+
+                    // Table Rows (Simple)
+                    if (line.startsWith('|')) {
+                        const cols = line.split('|').filter(c => c.trim());
+                        if (line.includes('---')) return null; // Skip separator
+                        return (
+                            <div key={i} className="grid grid-cols-5 gap-2 py-1 border-b border-gray-800 text-xs hover:bg-white/5">
+                                {cols.map((col, j) => (
+                                    <div key={j} className={j === 0 ? "font-bold text-cyber-neon" : "text-gray-400 truncate"} title={col.trim()}>
+                                        {col.trim().replace(/\*\*/g, '')}
+                                    </div>
+                                ))}
+                            </div>
+                        );
+                    }
+
+                    // Bold Text via classic split (very naive but works for "**text**")
+                    const parts = line.split('**');
+                    return (
+                        <div key={i} className="min-h-[1.2em]">
+                            {parts.map((part, j) =>
+                                j % 2 === 1 ? <strong key={j} className="text-white">{part}</strong> : part
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
 
     const handleSave = async () => {
         try {
@@ -89,7 +300,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     </button>
                 </div>
 
-                <div className="flex gap-2 mb-6 border-b border-gray-700 pb-2 overflow-x-auto">
+                <div className="flex gap-2 mb-6 border-b border-gray-700 pb-2 overflow-x-auto shrink-0 min-h-[50px]">
                     <button
                         onClick={() => setActiveTab('general')}
                         className={`px-3 py-2 rounded transition-colors flex items-center gap-2 ${activeTab === 'general' ? 'bg-cyber-purple/20 text-cyber-neon' : 'text-gray-400 hover:text-white'}`}
@@ -113,6 +324,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                         className={`px-3 py-2 rounded transition-colors flex items-center gap-2 ${activeTab === 'extension' ? 'bg-cyber-purple/20 text-cyber-neon' : 'text-gray-400 hover:text-white'}`}
                     >
                         <Plug size={16} /> Browser Extension
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('security')}
+                        className={`px-3 py-2 rounded transition-colors flex items-center gap-2 ${activeTab === 'security' ? 'bg-cyber-purple/20 text-cyber-neon' : 'text-gray-400 hover:text-white'}`}
+                    >
+                        <Shield size={16} /> Security
                     </button>
                 </div>
 
@@ -160,24 +377,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm text-gray-400 mb-1">Admin Password</label>
-                                        <div className="glass-input-wrapper">
-                                            <div className="absolute inset-0 z-0 bg-transparent"
-                                                style={{
-                                                    animation: `border-rotate ${5 + Math.random() * 2}s linear infinite`,
-                                                    animationDelay: `-${Math.random() * 5}s`
-                                                }}
-                                            />
-                                            <input
-                                                type="password"
-                                                value={settings.admin_password || ''}
-                                                onChange={e => setSettings({ ...settings, admin_password: e.target.value })}
-                                                className="glass-input p-2"
-                                                placeholder="Enter new password"
-                                            />
-                                        </div>
-                                    </div>
+                                    {/* Admin Password removed from General tab */}
+
 
                                     {!settings.use_mock && (
                                         <div className="text-xs text-yellow-500 bg-yellow-500/10 p-2 rounded">
@@ -211,12 +412,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
                             {activeTab === 'api_info' && (
                                 <div className="space-y-4 h-full flex flex-col min-h-0">
-                                    <p className="text-sm text-gray-400 shrink-0">Response from JDownloader <code>/help</code> endpoint:</p>
-                                    <div className="flex-1 min-h-0 bg-gray-950 rounded-lg border border-gray-800 overflow-hidden">
-                                        <pre className="h-full p-4 text-xs text-green-400 font-mono overflow-auto scrollbar-thin scrollbar-thumb-cyber-purple/20 whitespace-pre-wrap">
-                                            {helpContent || 'Loading or empty response...'}
-                                        </pre>
+                                    <div className="flex bg-gray-900 p-1 rounded-lg border border-gray-700 shrink-0">
+                                        <button
+                                            onClick={() => setApiInfoMode('raw')}
+                                            className={`flex-1 py-1.5 text-xs font-medium rounded transition-all ${apiInfoMode === 'raw' ? 'bg-gray-700 text-white shadow' : 'text-gray-500 hover:text-gray-300'}`}
+                                        >
+                                            Raw Help (Internal)
+                                        </button>
+                                        <button
+                                            onClick={() => setApiInfoMode('docs')}
+                                            className={`flex-1 py-1.5 text-xs font-medium rounded transition-all ${apiInfoMode === 'docs' ? 'bg-cyber-purple text-white shadow' : 'text-gray-500 hover:text-gray-300'}`}
+                                        >
+                                            Knowledge Base (Reference)
+                                        </button>
                                     </div>
+
+                                    {apiInfoMode === 'raw' ? (
+                                        <>
+                                            <p className="text-sm text-gray-400 shrink-0">Response from JDownloader <code>/help</code> endpoint:</p>
+                                            <div className="flex-1 min-h-0 bg-gray-950 rounded-lg border border-gray-800 overflow-hidden">
+                                                <pre className="h-full p-4 text-xs text-green-400 font-mono overflow-auto scrollbar-thin scrollbar-thumb-cyber-purple/20 whitespace-pre-wrap">
+                                                    {helpContent || 'Loading or empty response...'}
+                                                </pre>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="flex-1 min-h-0 bg-gray-900/50 rounded-lg border border-gray-800 overflow-hidden p-4 overflow-y-auto custom-scrollbar">
+                                            {loading ? <div className="animate-pulse text-cyber-neon">Loading docs...</div> : <SimpleMarkdown content={docsContent} />}
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -313,6 +537,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                         </p>
                                     </div>
                                 </div>
+                            )}
+
+                            {activeTab === 'security' && (
+                                <SecurityTabContent />
                             )}
                         </>
                     )}

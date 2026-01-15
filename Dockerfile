@@ -21,6 +21,9 @@ RUN pip install --no-cache-dir .
 # Copy backend code
 COPY backend/src ./src
 
+# Copy docs for Knowledge Base
+COPY docs ./docs
+
 # Copy built frontend assets
 COPY --from=frontend-builder /app/frontend/dist /app/static
 
