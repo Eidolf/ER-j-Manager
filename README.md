@@ -28,8 +28,11 @@ Copy this into Portainer -> Stacks -> Add stack:
 ```yaml
 services:
   app:
-    image: er-j-manager:latest
+    # Use the official image from GitHub Container Registry
+    image: ghcr.io/eidolf/er-j-manager:latest
     container_name: jdownloader-manager
+    # If you cannot connect to JD on the host (bound to 127.0.0.1), uncomment this and comment out 'ports':
+    # network_mode: "host"
     ports:
       - "13040:13040"
     # Mapping "host.docker.internal" allows the container to talk to your Host OS
@@ -37,10 +40,15 @@ services:
       - "host.docker.internal:host-gateway"
     environment:
       - PROJECT_NAME=JDownloader Manager
-      - SECRET_KEY=change_this_to_a_secure_random_string
+      - SECRET_KEY=change_this_to_a_secure_random_string # <--- IMPORTANT: Change this in production!
+      # Optional: Set a PIN for initial admin setup if needed
+      # - ACCESS_PIN=1234
     volumes:
-      - ./data:/app/data
+      - jdm_data:/app/data
     restart: unless-stopped
+
+volumes:
+  jdm_data:
 ```
 
 > **Note for Local-Host Users:**
