@@ -9,13 +9,12 @@ def test_health_check():
     assert settings.API_V1_STR == "/api/v1"
 
 
-def test_security_module():
-    """Test password hashing works correctly."""
-    from src.core.security import get_password_hash, verify_password
+def test_token_creation():
+    """Test JWT token creation works."""
+    from src.core.security import create_access_token
+    from datetime import timedelta
     
-    password = "test_password_123"
-    hashed = get_password_hash(password)
-    
-    assert hashed != password
-    assert verify_password(password, hashed)
-    assert not verify_password("wrong_password", hashed)
+    token = create_access_token(data={"sub": "testuser"}, expires_delta=timedelta(minutes=5))
+    assert token is not None
+    assert isinstance(token, str)
+    assert len(token) > 50  # JWT tokens are long

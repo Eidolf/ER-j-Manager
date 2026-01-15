@@ -1,0 +1,5 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <rect width="128" height="128" rx="22" fill="#111111" stroke="#8a2be2" stroke-width="4"/>
+  <text x="64" y="90" font-family="sans-serif" font-weight="900" font-size="58" text-anchor="middle" fill="#00ff00" stroke="#8a2be2" stroke-width="2">JDM</text>
+  <path d="M64 12 L64 25 M64 103 L64 116 M12 64 L25 64 M103 64 L116 64" stroke="#00ff00" stroke-width="3" stroke-linecap="round"/>
+</svg>

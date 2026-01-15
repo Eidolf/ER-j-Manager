@@ -21,6 +21,7 @@ export interface Package {
     total_bytes: number;
     loaded_bytes: number;
     status: string;
+    speed?: number;  // Current download speed in bytes/sec
 }
 
 export interface Link {

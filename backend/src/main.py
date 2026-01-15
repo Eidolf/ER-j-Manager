@@ -19,7 +19,6 @@ trace.get_tracer_provider().add_span_processor(
 import asyncio
 import json
 import logging
-import multiprocessing
 
 import uvicorn
 
@@ -27,9 +26,7 @@ from src.infrastructure.local_jd_api import LocalJDownloaderAPI
 
 logger = logging.getLogger(__name__)
 
-# CNL Receiver Process
-def run_cnl_receiver():
-    uvicorn.run("src.cnl.receiver:app", host="0.0.0.0", port=9666, log_level="info")
+
 
 background_tasks = set()
 
@@ -128,20 +125,13 @@ async def check_and_replay_links():
 async def lifespan(app: FastAPI):
     # Startup
     
-    # 1. Start CNL Receiver in separate process
-    cnl_process = multiprocessing.Process(target=run_cnl_receiver, daemon=True)
-    cnl_process.start()
-    logger.info("CNL Receiver started on port 9666")
-    
-    # 2. Start Replay Loop
+    # 1. Start Replay Loop
     task = asyncio.create_task(check_and_replay_links())
     background_tasks.add(task)
     task.add_done_callback(background_tasks.discard)
     
     yield
     # Shutdown
-    if cnl_process.is_alive():
-        cnl_process.terminate()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -160,6 +150,10 @@ if settings.BACKEND_CORS_ORIGINS:
     )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# Mount CNL Receiver for Remote Extension Access
+import src.cnl.receiver
+app.mount("/cnl", src.cnl.receiver.app)
 
 @app.get("/health")
 def health_check():

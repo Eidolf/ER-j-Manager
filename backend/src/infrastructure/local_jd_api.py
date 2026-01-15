@@ -20,7 +20,8 @@ class LocalJDownloaderAPI(JDownloaderAPI):
                     "bytesLoaded": True,
                     "url": True,
                     "priority": True,
-                    "eta": True
+                    "eta": True,
+                    "speed": True
                 }
                 resp = await client.post(f"{self.base_url}/{endpoint}", json=params)
                 if resp.status_code != 200:
@@ -76,6 +77,9 @@ class LocalJDownloaderAPI(JDownloaderAPI):
                 packages = []
                 for p in pkg_data:
                     uuid = str(p.get("uuid", "0"))
+                    pkg_links = links_by_pkg.get(uuid, [])
+                    # Calculate total speed from all links in package
+                    pkg_speed = sum(link.speed for link in pkg_links)
                     pk = Package(
                         uuid=uuid,
                         name=p.get("name", "Unknown"),
@@ -83,7 +87,8 @@ class LocalJDownloaderAPI(JDownloaderAPI):
                         total_bytes=p.get("bytesTotal", 0),
                         loaded_bytes=p.get("bytesLoaded", 0),
                         child_count=p.get("childCount", 0),
-                        links=links_by_pkg.get(uuid, [])
+                        links=pkg_links,
+                        speed=pkg_speed
                     )
                     packages.append(pk)
                 return packages
@@ -152,19 +157,28 @@ class LocalJDownloaderAPI(JDownloaderAPI):
             except:
                 int_ids = []
 
-            # Trial 1: packageIds (int lists), no linkIds
+            # Trial 1: Standard RPC params (linkIds, packageIds)
+            # Reference: moveToDownloadlist(long[] linkIds, long[] packageIds)
             payloads = [
-                {"packageIds": int_ids, "startDownloads": True},
+                {"params": [[], int_ids]},           # Standard RPC
+                {"packageIds": int_ids, "startDownloads": True}, # Legacy/Alternative
                 {"packageIds": int_ids, "linkIds": [], "startDownloads": True},
-                {"packageUUIDs": package_ids, "startDownloads": True}, # Strings
             ]
 
+            success = False
             for i, p in enumerate(payloads):
                 print(f"[JD-API] Move Trial {i+1}: {p}")
+                # Note: Some endpoints might need 'action' query param or just simple POST
                 resp = await client.post(f"{self.base_url}/linkgrabberv2/moveToDownloadlist", json=p)
                 print(f"[JD-API] Response {i+1}: {resp.status_code} | {resp.text!r}")
                 if resp.status_code == 200:
-                    return
+                    success = True
+                    break
+            
+            if success:
+                print("[JD-API] Move successful. Triggering Start Downloads...")
+                await self.start_downloads()
+                return
 
             print("[JD-API] All Move trials failed.")
 

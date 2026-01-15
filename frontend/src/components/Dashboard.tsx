@@ -72,6 +72,20 @@ export const Dashboard: React.FC = () => {
 
     const [isConnected, setIsConnected] = useState(false);
 
+    // Calculate total download speed from all packages
+    const totalSpeed = packages.reduce((sum, pkg) => sum + (pkg.speed || 0), 0);
+    const isDownloading = totalSpeed > 0;
+
+    // Format speed for display
+    const formatSpeed = (bytesPerSecond: number): string => {
+        if (bytesPerSecond >= 1024 * 1024) {
+            return `${(bytesPerSecond / (1024 * 1024)).toFixed(1)} MB/s`;
+        } else if (bytesPerSecond >= 1024) {
+            return `${(bytesPerSecond / 1024).toFixed(0)} KB/s`;
+        }
+        return `${bytesPerSecond} B/s`;
+    };
+
     const fetchBufferDetails = async () => {
         try {
             const res = await api.get('/buffer/details');
@@ -226,14 +240,43 @@ export const Dashboard: React.FC = () => {
             <div className="fixed inset-0 cyber-grid z-0 pointer-events-none" />
 
             <div className="relative z-10 max-w-6xl mx-auto">
-                <header className="flex justify-between items-center mb-10 bg-cyber-card/80 backdrop-blur-md p-6 rounded-2xl border border-gray-800 shadow-2xl relative z-50">
-                    <div className="flex items-center gap-4">
+                <header className={`flex justify-between items-center mb-10 backdrop-blur-md p-6 rounded-2xl shadow-2xl relative z-50 transition-all duration-500 ${isDownloading
+                    ? 'bg-gradient-to-r from-green-900/30 via-cyber-card/80 to-green-900/30 border-2 border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.3)]'
+                    : 'bg-cyber-card/80 border border-gray-800'
+                    }`}>
+                    {/* Animated background when downloading */}
+                    {isDownloading && (
+                        <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-green-500/10 to-transparent animate-pulse" />
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-green-400 to-transparent animate-[shimmer_2s_linear_infinite]" />
+                        </div>
+                    )}
+
+                    <div className="flex items-center gap-4 relative z-10">
                         <div className="w-12 h-12 flex items-center justify-center">
                             <img src="/logo.png" alt="ER-j-Manager Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_5px_rgba(236,72,153,0.5)]" />
                         </div>
-                        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyber-neon to-cyber-purple neon-text tracking-wider">
-                            JDownloader Manager
-                        </h1>
+                        <div>
+                            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyber-neon to-cyber-purple neon-text tracking-wider">
+                                JDownloader Manager
+                            </h1>
+                            {/* Speed Display with Equalizer */}
+                            {isDownloading && (
+                                <div className="flex items-center gap-3 mt-1">
+                                    {/* Equalizer Bars */}
+                                    <div className="flex items-end gap-[2px] h-5">
+                                        <div className="equalizer-bar"></div>
+                                        <div className="equalizer-bar"></div>
+                                        <div className="equalizer-bar"></div>
+                                        <div className="equalizer-bar"></div>
+                                        <div className="equalizer-bar"></div>
+                                    </div>
+                                    <span className="text-green-400 font-mono text-lg font-bold shadow-[0_0_10px_rgba(34,197,94,0.5)]">
+                                        ⬇ {formatSpeed(totalSpeed)}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <div className="flex gap-4">
                         <div className="flex items-center bg-gray-800 rounded-lg p-1 border border-gray-700">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { X, Save, Server } from 'lucide-react';
+import { X, Save, Server, Plug, Download, Settings as SettingsIcon, Book, Copy, Check } from 'lucide-react';
 
 interface Settings {
     jd_host: string;
@@ -26,6 +26,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     const [testResult, setTestResult] = useState<'success' | 'error' | null>(null);
     const [activeTab, setActiveTab] = useState('general');
     const [helpContent, setHelpContent] = useState('');
+    const [copiedToken, setCopiedToken] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -81,37 +82,37 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             <div className="w-full max-w-4xl bg-cyber-card border border-cyber-neon/50 rounded-xl p-6 shadow-[0_0_20px_rgba(236,72,153,0.3)] max-h-[85vh] flex flex-col">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-bold flex items-center gap-2 neon-text">
-                        <Server size={20} /> Settings
+                        <SettingsIcon size={20} /> Settings
                     </h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
                         <X size={24} />
                     </button>
                 </div>
 
-                <div className="flex gap-2 mb-6 border-b border-gray-700 pb-2">
+                <div className="flex gap-2 mb-6 border-b border-gray-700 pb-2 overflow-x-auto">
                     <button
                         onClick={() => setActiveTab('general')}
-                        className={`px-3 py-1 rounded transition-colors ${activeTab === 'general' ? 'bg-cyber-purple/20 text-cyber-neon' : 'text-gray-400 hover:text-white'}`}
+                        className={`px-3 py-2 rounded transition-colors flex items-center gap-2 ${activeTab === 'general' ? 'bg-cyber-purple/20 text-cyber-neon' : 'text-gray-400 hover:text-white'}`}
                     >
-                        General
+                        <SettingsIcon size={16} /> General
                     </button>
                     <button
                         onClick={() => setActiveTab('api_info')}
-                        className={`px-3 py-1 rounded transition-colors ${activeTab === 'api_info' ? 'bg-cyber-purple/20 text-cyber-neon' : 'text-gray-400 hover:text-white'}`}
+                        className={`px-3 py-2 rounded transition-colors flex items-center gap-2 ${activeTab === 'api_info' ? 'bg-cyber-purple/20 text-cyber-neon' : 'text-gray-400 hover:text-white'}`}
                     >
-                        API Info
+                        <Server size={16} /> API Info
                     </button>
                     <button
                         onClick={() => setActiveTab('setup_guide')}
-                        className={`px-3 py-1 rounded transition-colors ${activeTab === 'setup_guide' ? 'bg-cyber-purple/20 text-cyber-neon' : 'text-gray-400 hover:text-white'}`}
+                        className={`px-3 py-2 rounded transition-colors flex items-center gap-2 ${activeTab === 'setup_guide' ? 'bg-cyber-purple/20 text-cyber-neon' : 'text-gray-400 hover:text-white'}`}
                     >
-                        Setup Guide
+                        <Book size={16} /> Setup Guide
                     </button>
                     <button
                         onClick={() => setActiveTab('extension')}
-                        className={`px-3 py-1 rounded transition-colors ${activeTab === 'extension' ? 'bg-cyber-purple/20 text-cyber-neon' : 'text-gray-400 hover:text-white'}`}
+                        className={`px-3 py-2 rounded transition-colors flex items-center gap-2 ${activeTab === 'extension' ? 'bg-cyber-purple/20 text-cyber-neon' : 'text-gray-400 hover:text-white'}`}
                     >
-                        🔌 Browser Extension
+                        <Plug size={16} /> Browser Extension
                     </button>
                 </div>
 
@@ -239,26 +240,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                             {activeTab === 'extension' && (
                                 <div className="space-y-6 text-gray-300 text-sm">
                                     <div className="bg-gradient-to-r from-cyber-purple/20 to-cyber-neon/10 p-4 rounded-xl border border-cyber-neon/30">
-                                        <h3 className="text-lg font-bold text-white neon-text mb-2">🔌 Remote Click'n'Load</h3>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Plug className="text-cyber-neon" size={20} />
+                                            <h3 className="text-lg font-bold text-white neon-text">Remote Click'n'Load</h3>
+                                        </div>
                                         <p className="text-gray-400">
                                             Use this browser extension to send Click'n'Load links from <strong>any computer</strong> to your JDownloader Manager server.
                                         </p>
                                     </div>
 
                                     <div>
-                                        <h4 className="font-semibold text-white mb-3">📥 Download</h4>
+                                        <h4 className="font-semibold text-white mb-3 flex items-center gap-2"><Download size={16} /> Download</h4>
                                         <a
-                                            href="/browser-extension.tar.gz"
-                                            download="jd-manager-cnl-bridge.tar.gz"
+                                            href="/browser-extension.zip"
+                                            download="jd-manager-cnl-bridge.zip"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
                                             className="inline-flex items-center gap-2 px-6 py-3 bg-cyber-purple hover:bg-cyber-purple/80 text-white font-bold rounded-lg transition-all shadow-lg hover:shadow-cyan-500/20"
                                         >
-                                            ⬇️ Download Extension (.tar.gz)
+                                            <Download size={18} /> Download Extension (.zip)
                                         </a>
                                         <p className="text-xs text-gray-500 mt-2">Compatible with Chrome, Edge, Brave (Chromium-based browsers)</p>
                                     </div>
 
                                     <div>
-                                        <h4 className="font-semibold text-white mb-3">🛠️ Installation</h4>
+                                        <h4 className="font-semibold text-white mb-3 flex items-center gap-2"><SettingsIcon size={16} /> Installation</h4>
                                         <ol className="list-decimal list-inside space-y-2 marker:text-cyber-neon pl-2">
                                             <li>Extract the downloaded .zip file</li>
                                             <li>Open <code className="bg-gray-800 px-1 rounded">chrome://extensions/</code> in your browser</li>
@@ -269,11 +275,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                     </div>
 
                                     <div>
-                                        <h4 className="font-semibold text-white mb-3">⚙️ Configuration</h4>
+                                        <h4 className="font-semibold text-white mb-3 flex items-center gap-2"><SettingsIcon size={16} /> Configuration</h4>
                                         <ol className="list-decimal list-inside space-y-2 marker:text-cyber-neon pl-2">
                                             <li>Click the extension icon in your toolbar</li>
                                             <li>Enter your <strong>Server URL</strong>: <code className="bg-gray-800 px-1 rounded text-cyber-neon">{window.location.origin}</code></li>
-                                            <li>Enter your <strong>Auth Token</strong> (from browser localStorage → "token")</li>
+                                            <li>
+                                                <div className="flex flex-col gap-1 mt-1 mb-2">
+                                                    <span>Enter your <strong>Auth Token</strong>:</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <code className="bg-gray-800 px-3 py-2 rounded text-cyber-neon text-xs break-all flex-1 border border-gray-700 font-mono">
+                                                            {localStorage.getItem('token') || 'No token found (please login first)'}
+                                                        </code>
+                                                        <button
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText(localStorage.getItem('token') || '');
+                                                                setCopiedToken(true);
+                                                                setTimeout(() => setCopiedToken(false), 2000);
+                                                            }}
+                                                            className="p-2 bg-cyber-purple/20 hover:bg-cyber-purple/40 rounded text-cyber-neon transition-colors"
+                                                            title="Copy Token"
+                                                        >
+                                                            {copiedToken ? <Check size={14} /> : <Copy size={14} />}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </li>
                                             <li>Click <strong>Save</strong> and <strong>Test</strong></li>
                                         </ol>
                                     </div>

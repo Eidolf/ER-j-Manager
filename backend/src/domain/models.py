@@ -30,6 +30,7 @@ class Package(BaseModel):
     total_bytes: int = 0
     loaded_bytes: int = 0
     child_count: int = 0
+    speed: int = 0  # Aggregated speed from all links (bytes per second)
 
 class User(BaseModel):
     username: str
