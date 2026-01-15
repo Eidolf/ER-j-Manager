@@ -20,7 +20,7 @@ import asyncio
 import json
 import logging
 
-import uvicorn
+
 
 from src.infrastructure.local_jd_api import LocalJDownloaderAPI
 

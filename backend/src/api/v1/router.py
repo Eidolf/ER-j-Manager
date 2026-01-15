@@ -4,7 +4,7 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from fastapi.security import OAuth2PasswordRequestForm
 
 from pydantic import BaseModel
@@ -102,7 +102,7 @@ async def get_api_docs(
         if not docs_path or not docs_path.exists():
             # Fallback debug info
             debug_paths = [str(root / "docs") for root in candidates]
-            return {"text": f"# Error\nDocumentation file not found.\nChecked paths:\n" + "\n".join(debug_paths)}
+            return {"text": "# Error\nDocumentation file not found.\nChecked paths:\n" + "\n".join(debug_paths)}
             
         return {"text": docs_path.read_text(encoding="utf-8")}
     except Exception as e:
@@ -301,8 +301,11 @@ async def replay_link_buffer(
 
 @router.get("/system/status")
 async def get_system_status(
+    response: Response,
     api: Annotated[MockJDownloaderAPI, Depends(deps.get_jd_api)],
 ):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    
     # Check JD Connection
     jd_online = False
     myjd_status = {"online": False, "status": "Unknown"}

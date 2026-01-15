@@ -1,5 +1,9 @@
 
+import asyncio
 import httpx
+import os
+import socket
+import struct
 
 from src.domain.models import DownloadStatus, Link, Package
 from src.infrastructure.api_interface import JDownloaderAPI
@@ -276,35 +280,103 @@ class LocalJDownloaderAPI(JDownloaderAPI):
             # /system/exitJD
             await client.post(f"{self.base_url}/system/exitJD")
 
+    def _check_tcp_sync(self) -> bool:
+        """Synchronous check for established connections to MyJD servers"""
+        try:
+            # 1. Resolve MyJD domains to IPs
+            domains = ["api.jdownloader.org", "my.jdownloader.org"]
+            target_hexes = set()
+            
+            for d in domains:
+                try:
+                    # Resolve IP (Family, Type, Proto, Canon, SockAddr)
+                    # We accept IPv4 for now as /proc/net/tcp is IPv4
+                    # (IPv6 would be /proc/net/tcp6)
+                    infos = socket.getaddrinfo(d, 443, socket.AF_INET)
+                    for info in infos:
+                        ip = info[4][0]
+                        try:
+                            # Convert IP to little-endian hex (as stored in /proc/net/tcp)
+                            packed = socket.inet_aton(ip)
+                            h = struct.unpack("<I", packed)[0]
+                            target_hexes.add(f"{h:08X}")
+                        except:
+                            pass
+                except:
+                    pass
+            
+            if not target_hexes:
+                # If DNS fails, we can't verify. Fail safe -> False?
+                # Or True? Use False to be strict.
+                return False
+
+            # 2. Scan /proc/net/tcp for established connections (01) to 443 (01BB) matching target IPs
+            if not os.path.exists("/proc/net/tcp"):
+                return False # Cannot check
+
+            with open("/proc/net/tcp", "r") as f:
+                next(f) # Skip header
+                for line in f:
+                    parts = line.strip().split()
+                    if len(parts) >= 4:
+                        # Format: sl local_address rem_address st ...
+                        remote = parts[2]
+                        state = parts[3]
+                        
+                        if state == "01": # ESTABLISHED
+                            rem_ip_hex, rem_port_hex = remote.split(":")
+                            if rem_port_hex == "01BB": # 443
+                                if rem_ip_hex in target_hexes:
+                                    return True
+            return False
+        except Exception as e:
+            print(f"TCP Check Error: {e}")
+            return False
+
     async def get_myjd_connection_status(self) -> dict:
         async with httpx.AsyncClient() as client:
             try:
-                # We want to check if the local JD instance is connected to MyJD
-                # /myjdownloader/list usually lists connected instances from the perspective of the cloud
-                # But querying LOCAL instance about its connection state is tricky without standard API docs.
-                # However, /myjdownloader/getDirectConnectionInfos might work.
+                iface = "org.jdownloader.api.myjdownloader.MyJDownloaderSettings"
                 
-                # Let's try to infer it from the existence of the service or simple general check
-                # Note: This is an estimation. Real status usually requires internal JD methods.
-                
-                # Check 1: Is JD reachable?
-                await self.get_help()
-                
-                # Check 2: Try to get MyJD specific info
-                # Most reliable way via RPC:
-                # org.jdownloader.api.myjdownloader.MyJDownloaderAPI.getConnectionStatus()
-                # But we use the HTTP bridge.
-                
-                # We will return basic "connected" for now if API is reachable, 
-                # but let's try to query /myjdownloader/list just in case it returns local info.
-                
-                resp = await client.get(f"{self.base_url}/myjdownloader/list")
-                # If this works, it might return empty or null if not connected to cloud?
-                
-                return {
-                    "online": True, 
-                    "status": "Connected" if resp.status_code == 200 else "Unknown"
-                }
+                # Helper to get config value
+                async def get_config(key):
+                    # RPC: [interface, storage(null), key]
+                    payload = {"params": [iface, None, key]}
+                    r = await client.post(f"{self.base_url}/config/get", json=payload)
+                    if r.status_code == 200:
+                        return r.json() 
+                    return None
 
-            except Exception:
-                return {"online": False, "status": "Disconnected"}
+                # 1. Check AutoConnect
+                ac_resp = await get_config("AutoConnectEnabledV2")
+                auto_connect = ac_resp.get("data") if ac_resp else False
+                
+                if not auto_connect:
+                    return {"online": False, "status": "MyJD Disabled (AutoConnect Off)"}
+
+                # 2. Check Device Name
+                dn_resp = await get_config("DeviceName")
+                device_name = dn_resp.get("data") if dn_resp else None
+                
+                if not device_name:
+                    return {"online": False, "status": "Not Configured (No Device Name)"}
+
+                # 3. Check Latest Error
+                le_resp = await get_config("LatestError")
+                latest_error = le_resp.get("data") if le_resp else "Unknown"
+                
+                if latest_error and str(latest_error) not in ["{}", "NONE", "null", "None"]:
+                     return {"online": False, "status": f"Error: {latest_error}"}
+
+                # 4. FINAL CHECK: TCP Connection
+                # We defer to thread pool because socket/file io is blocking
+                loop = asyncio.get_running_loop()
+                is_connected = await loop.run_in_executor(None, self._check_tcp_sync)
+                
+                if not is_connected:
+                    return {"online": False, "status": "Disconnected (No Active Connection)"}
+
+                return {"online": True, "status": f"Connected as {device_name}"}
+
+            except Exception as e:
+                return {"online": False, "status": f"Disconnected ({str(e)})"}

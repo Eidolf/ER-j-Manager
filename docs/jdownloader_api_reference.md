@@ -40,3 +40,22 @@ It reflects the "Direct Connection" API (port 3128/9666), typically accessible v
 - **RPC Style:** Many endpoints (especially `v2`) expect a JSON payload with a `params` array corresponding to the Java method signature.
 - **CamelCase:** System endpoints like `restartJD` and `exitJD` are case-sensitive and specific.
 - **Legacy Fallback:** Some endpoints might be accessible via `linkcollector/*` but `linkgrabberv2/*` is preferred.
+
+## Configuration (config)
+The `config` namespace allows accessing internal JDownloader settings via RPC.
+**Endpoint:** `/config/get`  
+**Method:** POST  
+**Payload:** `{"params": ["InterfaceName", null, "Key"]}`
+
+### Check MyJDownloader Status
+To check the connection status, query `MyJDownloaderSettings`.
+- **Interface:** `org.jdownloader.api.myjdownloader.MyJDownloaderSettings`
+- **Key:** `LatestError` (Returns `NONE` or `{}` if no error)
+- **Key:** `DeviceName` (Returns configured device name)
+- **Key:** `AutoConnectEnabledV2` (Returns boolean)
+
+> [!IMPORTANT]
+> **Live Status Verification**: The keys above only reflect the *configuration* and *last known error*. They do **not** guarantee an active connection to the MyJDownloader cloud. 
+> To definitively verify the "Online" status, it is recommended to also check for an established TCP connection to `api.jdownloader.org` or `my.jdownloader.org` on port 443. The `LatestError` key may remain empty even if the persistent connection is down.
+
+

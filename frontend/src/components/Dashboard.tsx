@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api, type Package } from '../api/client';
-import { Play, Pause, Plus, Download, Settings, LogOut, FolderInput, FileUp, Power, RefreshCw, Info, X, Server, Globe } from 'lucide-react';
+import { Play, Pause, Plus, Download, Settings, LogOut, FolderInput, FileUp, Power, RefreshCw, Info, X, Server, Globe, Clock } from 'lucide-react';
 import { SettingsModal } from './SettingsModal';
 
 interface BufferPackage {
@@ -104,7 +104,11 @@ export const Dashboard: React.FC = () => {
 
     // Calculate total download speed from all packages
     const totalSpeed = packages.reduce((sum, pkg) => sum + (pkg.speed || 0), 0);
+    const totalRemainingBytes = packages.reduce((sum, pkg) => sum + Math.max(0, pkg.total_bytes - pkg.loaded_bytes), 0);
     const isDownloading = totalSpeed > 0;
+
+    // Calculate global ETA
+    const etaSeconds = isDownloading && totalRemainingBytes > 0 ? totalRemainingBytes / totalSpeed : 0;
 
     // Format speed for display
     const formatSpeed = (bytesPerSecond: number): string => {
@@ -114,6 +118,22 @@ export const Dashboard: React.FC = () => {
             return `${(bytesPerSecond / 1024).toFixed(0)} KB/s`;
         }
         return `${bytesPerSecond} B/s`;
+    };
+
+    // Format duration for ETA
+    const formatDuration = (seconds: number): string => {
+        if (!seconds || !isFinite(seconds)) return '--:--:--';
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+
+        if (h > 0) {
+            return `${h}h ${m}m ${s}s`;
+        } else if (m > 0) {
+            return `${m}m ${s}s`;
+        } else {
+            return `${s}s`;
+        }
     };
 
     const fetchBufferDetails = async () => {
@@ -128,22 +148,46 @@ export const Dashboard: React.FC = () => {
     // Initial fetch of package data
     const fetchData = async () => {
         try {
-            const [pkgRes, linkRes, statusRes] = await Promise.all([
+            // Use allSettled to allow some requests to fail (e.g. if JD is offline, downloads/linkgrabber endpoints might 500)
+            // But system/status should always return (it handles offline JD internally)
+            const results = await Promise.allSettled([
                 api.get('/downloads'),
                 api.get('/linkgrabber'),
                 api.get('/system/status')
             ]);
 
-            setPackages(pkgRes.data);
-            setLinkGrabberPackages(linkRes.data);
-            setIsConnected(statusRes.data.jd_online);
-            setBufferCount(statusRes.data.buffer_count || 0);
-            if (statusRes.data.myjd_connection) {
-                setMyjdStatus(statusRes.data.myjd_connection);
+            const [pkgRes, linkRes, statusRes] = results;
+
+            // Process Downloads
+            if (pkgRes.status === 'fulfilled') {
+                setPackages(pkgRes.value.data);
+            } else {
+                setPackages([]);
             }
+
+            // Process LinkGrabber
+            if (linkRes.status === 'fulfilled') {
+                setLinkGrabberPackages(linkRes.value.data);
+            } else {
+                setLinkGrabberPackages([]);
+            }
+
+            // Process Status (Crucial for Buffer Banner)
+            if (statusRes.status === 'fulfilled') {
+                const data = statusRes.value.data;
+                setIsConnected(data.jd_online);
+                setBufferCount(data.buffer_count || 0);
+                if (data.myjd_connection) {
+                    setMyjdStatus(data.myjd_connection);
+                }
+            } else {
+                // If status endpoint itself fails (network error to backend?), assume offline
+                setIsConnected(false);
+            }
+
         } catch (error) {
-            console.error("Failed to fetch data", error);
-            setIsConnected(false); // Set connected to false if any fetch fails
+            console.error("Critical fetch error", error);
+            setIsConnected(false);
         }
     };
 
@@ -320,26 +364,43 @@ export const Dashboard: React.FC = () => {
                         <div className="w-12 h-12 flex items-center justify-center">
                             <img src="/logo.png" alt="ER-j-Manager Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_5px_rgba(236,72,153,0.5)]" />
                         </div>
-                        <div>
-                            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyber-neon to-cyber-purple neon-text tracking-wider">
+                        <div className="flex flex-col justify-center h-20">
+                            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyber-neon to-cyber-purple neon-text tracking-wider leading-none">
                                 JDownloader Manager
                             </h1>
                             {/* Speed Display with Equalizer */}
-                            {isDownloading && (
-                                <div className="flex items-center gap-3 mt-1">
-                                    {/* Equalizer Bars */}
-                                    <div className="flex items-end gap-[2px] h-5">
-                                        <div className="equalizer-bar"></div>
-                                        <div className="equalizer-bar"></div>
-                                        <div className="equalizer-bar"></div>
-                                        <div className="equalizer-bar"></div>
-                                        <div className="equalizer-bar"></div>
+                            <div className={`mt-1 transition-opacity duration-300 ${isDownloading ? 'opacity-100' : 'opacity-0'}`}>
+                                {isDownloading ? (
+                                    <div className="flex flex-col">
+                                        {/* ETA display - Above the download speed */}
+                                        {etaSeconds > 0 && (
+                                            <div className="text-xs text-cyber-neon font-mono mb-0.5 flex items-center gap-1.5 ml-1">
+                                                <Clock size={12} className="text-cyber-neon" />
+                                                <span className="opacity-75">ETA:</span>
+                                                <span className="font-bold">{formatDuration(etaSeconds)}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex items-center gap-3">
+                                            {/* Equalizer Bars */}
+                                            <div className="flex items-end gap-[2px] h-4">
+                                                <div className="equalizer-bar"></div>
+                                                <div className="equalizer-bar"></div>
+                                                <div className="equalizer-bar"></div>
+                                                <div className="equalizer-bar"></div>
+                                                <div className="equalizer-bar"></div>
+                                            </div>
+                                            <span className="text-green-400 font-mono text-lg font-bold shadow-[0_0_10px_rgba(34,197,94,0.5)] leading-none">
+                                                ⬇ {formatSpeed(totalSpeed)}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <span className="text-green-400 font-mono text-lg font-bold shadow-[0_0_10px_rgba(34,197,94,0.5)]">
-                                        ⬇ {formatSpeed(totalSpeed)}
-                                    </span>
-                                </div>
-                            )}
+                                ) : (
+                                    // Reserve space to prevent layout shift if needed, or keep empty if h-20 handles it.
+                                    // Since h-20 anchors the height, this empty block isn't strictly necessary for height, 
+                                    // but helps maintain structure if flex justify changes.
+                                    <div className="h-10"></div>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <div className="flex gap-4">

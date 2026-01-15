@@ -74,8 +74,9 @@ const SecurityTabContent = () => {
             setNewPassword('');
             setConfirmPassword('');
             // Optional: Close modal after delay?
-        } catch (err: any) {
-            setError(err.response?.data?.detail || "Failed to change password.");
+        } catch (err: unknown) {
+            const errorMessage = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || "Failed to change password.";
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
