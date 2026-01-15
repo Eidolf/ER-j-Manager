@@ -16,7 +16,7 @@ def read_version():
 def write_version(version):
     with open(VERSION_FILE, "w") as f:
         f.write(version)
-    print(f"Updated VERSION to {version}")
+    print(f"Updated VERSION to {version}", file=sys.stderr)
 
 def get_date_parts():
     now = datetime.datetime.utcnow()
