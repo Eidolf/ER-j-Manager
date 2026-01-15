@@ -3,7 +3,12 @@ services:
     build: .
     image: er-j-manager:latest
     container_name: jdownloader-manager
-    network_mode: "host"
+    # If you cannot connect to JD on the host (bound to 127.0.0.1), uncomment this and comment out 'ports':
+    # network_mode: "host"
+    ports:
+      - "13040:13040"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - PROJECT_NAME=JDownloader Manager
       - LOG_LEVEL=INFO
@@ -13,7 +18,7 @@ services:
       - ./backend/data:/app/data
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:13040/health" ]
+      test: [ "CMD", "curl", "-f", "http://127.0.0.1:13040/health" ]
       interval: 30s
       timeout: 10s
       retries: 3

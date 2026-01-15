@@ -18,23 +18,40 @@ A secure, production-ready web interface for managing JDownloader 2 downloads vi
 - **Frontend**: React, TypeScript, Vite, TailwindCSS
 - **Infrastructure**: Docker, GitHub Actions
 
-## Quick Start (Docker)
+## Quick Start (Docker / Portainer)
 
-1.  **Clone the repository**:
-    ```bash
-    git clone <repo-url>
-    cd ER-j-Manager
-    ```
+This stack is designed to run alongside your existing JDownloader container.
 
-2.  **Run with Docker Compose**:
-    ```bash
-    docker-compose up --build
-    ```
+**1. Docker Compose Configuration**
+Copy this into Portainer -> Stacks -> Add stack:
 
-3.  **Access the application**:
-    - Web UI: http://localhost:13040
-    - API Docs: http://localhost:13040/docs
-    - Default Credentials: `admin` / `admin`
+```yaml
+services:
+  app:
+    image: er-j-manager:latest
+    container_name: jdownloader-manager
+    ports:
+      - "13040:13040"
+    # Mapping "host.docker.internal" allows the container to talk to your Host OS
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - PROJECT_NAME=JDownloader Manager
+      - SECRET_KEY=change_this_to_a_secure_random_string
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+```
+
+> **Note for Local-Host Users:**
+> If your JDownloader runs on the same machine but is strictly bound to `127.0.0.1` (localhost) and refuses connections:
+> 1. Use `network_mode: "host"` in your compose file.
+> 2. Remove the `ports` section.
+> 3. Use `http://127.0.0.1:3128` in the Settings.
+
+**2. Access the application**:
+- Web UI: http://<your-ip>:13040
+- Default Credentials: `admin` / `admin`
 
 ## Development Setup
 

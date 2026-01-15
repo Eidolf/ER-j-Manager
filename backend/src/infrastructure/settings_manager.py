@@ -15,7 +15,9 @@ class JDSettings(BaseModel):
 
     @property
     def api_url(self) -> str:
-        return f"http://{self.jd_host}:{self.jd_port}"
+        # Clean host if user added protocol
+        clean_host = self.jd_host.replace("http://", "").replace("https://", "").rstrip("/")
+        return f"http://{clean_host}:{self.jd_port}"
 
 class SettingsManager:
     def __init__(self):
