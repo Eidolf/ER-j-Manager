@@ -1,7 +1,8 @@
 import json
 import os
-from typing import Optional
+
 from pydantic import BaseModel
+
 from src.core.config import settings as app_settings
 
 SETTINGS_FILE = "data/settings.json"
@@ -34,7 +35,7 @@ class SettingsManager:
 
     def load_settings(self) -> JDSettings:
         try:
-            with open(self.file_path, "r") as f:
+            with open(self.file_path) as f:
                 data = json.load(f)
             return JDSettings(**data)
         except Exception:

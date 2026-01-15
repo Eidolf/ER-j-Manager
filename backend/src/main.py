@@ -1,13 +1,14 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from opentelemetry import trace
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor, ConsoleSpanExporter
+from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
 
-from src.core.config import settings
 from src.api.v1.router import router as api_router
+from src.core.config import settings
 
 # Telemetry Setup
 trace.set_tracer_provider(TracerProvider())
@@ -15,11 +16,13 @@ trace.get_tracer_provider().add_span_processor(
     SimpleSpanProcessor(ConsoleSpanExporter())
 )
 
-import multiprocessing
-import uvicorn
 import asyncio
 import json
 import logging
+import multiprocessing
+
+import uvicorn
+
 from src.infrastructure.local_jd_api import LocalJDownloaderAPI
 
 logger = logging.getLogger(__name__)
@@ -31,6 +34,7 @@ def run_cnl_receiver():
 background_tasks = set()
 
 from pathlib import Path
+
 
 # Helper (duplicated but safe for now or could be imported)
 # src/main.py -> src -> backend
@@ -69,7 +73,7 @@ async def check_and_replay_links():
                 if buffer_file.exists():
                     buffer_data = []
                     try:
-                        with open(buffer_file, "r") as f:
+                        with open(buffer_file) as f:
                             buffer_data = json.load(f)
                     except:
                         pass
@@ -166,6 +170,7 @@ def readiness_check():
     return {"status": "ready"}
 
 import os
+
 from fastapi.staticfiles import StaticFiles
 
 # Mount static files if they exist (prod/docker)

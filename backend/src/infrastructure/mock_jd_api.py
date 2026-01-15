@@ -1,13 +1,14 @@
 import asyncio
 import random
-from typing import List, Dict
-from uuid import UUID, uuid4
-from src.domain.models import Package, Link, DownloadStatus
+from uuid import uuid4
+
+from src.domain.models import DownloadStatus, Link, Package
 from src.infrastructure.api_interface import JDownloaderAPI
+
 
 class MockJDownloaderAPI(JDownloaderAPI):
     def __init__(self):
-        self._packages: Dict[str, Package] = {}
+        self._packages: dict[str, Package] = {}
         # Seed some data
         self._seed_data()
         
@@ -31,12 +32,12 @@ class MockJDownloaderAPI(JDownloaderAPI):
             ]
         )
 
-    async def get_packages(self) -> List[Package]:
+    async def get_packages(self) -> list[Package]:
         # Simulate network latency
         await asyncio.sleep(0.1)
         return list(self._packages.values())
 
-    async def get_linkgrabber_packages(self) -> List[Package]:
+    async def get_linkgrabber_packages(self) -> list[Package]:
         await asyncio.sleep(0.1)
         # return dummy linkgrabber item
         return [
@@ -50,7 +51,7 @@ class MockJDownloaderAPI(JDownloaderAPI):
             )
         ]
 
-    async def add_links(self, links: List[str], package_name: str = "New Package"):
+    async def add_links(self, links: list[str], package_name: str = "New Package"):
         await asyncio.sleep(0.2)
         pkg_id = str(uuid4())
         new_links = []
@@ -63,7 +64,7 @@ class MockJDownloaderAPI(JDownloaderAPI):
     async def start_downloads(self):
         for pkg in self._packages.values():
             for link in pkg.links:
-                if link.status == DownloadStatus.PAUSED or link.status == DownloadStatus.STOPPED:
+                if link.status in (DownloadStatus.PAUSED, DownloadStatus.STOPPED):
                     link.status = DownloadStatus.RUNNING
     
     async def stop_downloads(self):
@@ -77,7 +78,7 @@ class MockJDownloaderAPI(JDownloaderAPI):
         # For simplicity, we just clear the list in mock or log it
         pass
 
-    async def move_to_dl(self, package_ids: List[str]) -> None:
+    async def move_to_dl(self, package_ids: list[str]) -> None:
         # Mock move
         pass
 
@@ -92,15 +93,15 @@ class MockJDownloaderAPI(JDownloaderAPI):
         ...
         """
 
-    async def remove_linkgrabber_packages(self, package_ids: List[str]) -> None:
+    async def remove_linkgrabber_packages(self, package_ids: list[str]) -> None:
         # Mock remove
         pass
 
-    async def remove_download_packages(self, package_ids: List[str]) -> None:
+    async def remove_download_packages(self, package_ids: list[str]) -> None:
         # Mock remove
         pass
 
-    async def set_download_directory(self, package_ids: List[str], directory: str) -> None:
+    async def set_download_directory(self, package_ids: list[str], directory: str) -> None:
         pass
 
     async def add_dlc(self, file_content: bytes) -> str:

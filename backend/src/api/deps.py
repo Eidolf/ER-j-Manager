@@ -1,14 +1,16 @@
-from typing import Generator, Annotated
+from collections.abc import Generator
+from typing import Annotated
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import jwt, JWTError
+from jose import JWTError, jwt
 from pydantic import ValidationError
 
 from src.core.config import settings
-from src.domain.models import TokenData, User
+from src.domain.models import TokenData
 from src.infrastructure.api_interface import JDownloaderAPI
-from src.infrastructure.mock_jd_api import MockJDownloaderAPI
 from src.infrastructure.local_jd_api import LocalJDownloaderAPI
+from src.infrastructure.mock_jd_api import MockJDownloaderAPI
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/login")
 

@@ -1,9 +1,11 @@
 from typing import Annotated
+
 from fastapi import APIRouter, Depends
-from src.infrastructure.settings_manager import settings_manager, JDSettings
-from src.api.deps import oauth2_scheme
+
 from src.api import deps
+from src.api.deps import oauth2_scheme
 from src.infrastructure.mock_jd_api import MockJDownloaderAPI
+from src.infrastructure.settings_manager import JDSettings, settings_manager
 
 router = APIRouter()
 
@@ -19,7 +21,6 @@ async def update_settings(settings: JDSettings, token: str = Depends(oauth2_sche
 @router.post("/test", response_model=dict)
 async def test_connnection(settings: JDSettings, token: str = Depends(oauth2_scheme)):
     from src.infrastructure.local_jd_api import LocalJDownloaderAPI
-    from src.infrastructure.mock_jd_api import MockJDownloaderAPI
     # Create temp API instance with provided settings
     api = LocalJDownloaderAPI(base_url=settings.api_url)
     try:

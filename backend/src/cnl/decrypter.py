@@ -1,7 +1,9 @@
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
 import base64
 import binascii
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
 
 class CNLDecrypter:
     @staticmethod
@@ -31,4 +33,4 @@ class CNLDecrypter:
     @staticmethod
     def extract_links(decrypted_text: str) -> list[str]:
         # Links are often separated by \r\n or \n
-        return [l.strip() for l in decrypted_text.replace('\r', '\n').split('\n') if l.strip()]
+        return [link.strip() for link in decrypted_text.replace('\r', '\n').split('\n') if link.strip()]

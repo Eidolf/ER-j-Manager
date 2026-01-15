@@ -1,9 +1,9 @@
-from fastapi import FastAPI, Form, Response, Request
-from fastapi.middleware.cors import CORSMiddleware
-import os
 import json
 import logging
-from typing import Optional
+
+from fastapi import FastAPI, Form, Response
+from fastapi.middleware.cors import CORSMiddleware
+
 from .decrypter import CNLDecrypter
 
 # Setup Logging
@@ -64,9 +64,9 @@ async def crossdomain():
 async def add_crypted(
     crypted: str = Form(...),
     jk: str = Form(...),
-    passwords: Optional[str] = Form(None),
-    source: Optional[str] = Form(None),
-    package: Optional[str] = Form(None)  # Package name for grouping
+    passwords: str | None = Form(None),
+    source: str | None = Form(None),
+    package: str | None = Form(None)  # Package name for grouping
 ):
     print(f"DEBUG: Received CNL payload from {source}, package: {package}")
     logger.info(f"Received CNL payload. Source: {source}, Package: {package}")
@@ -97,7 +97,7 @@ async def add_crypted(
     buffer_data = []
     if BUFFER_FILE.exists():
         try:
-            with open(BUFFER_FILE, "r") as f:
+            with open(BUFFER_FILE) as f:
                 buffer_data = json.load(f)
         except:
             buffer_data = []

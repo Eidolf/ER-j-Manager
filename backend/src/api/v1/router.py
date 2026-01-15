@@ -1,17 +1,19 @@
+import json
+import os
 from datetime import timedelta
-from typing import Annotated, List
+from pathlib import Path
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
+from src.api import deps
 from src.core import security
 from src.core.config import settings
-from src.domain.models import Link, Package, Token, User
+from src.domain.models import Package, Token, User
 from src.infrastructure.mock_jd_api import MockJDownloaderAPI
-from src.api import deps
 from src.infrastructure.settings_manager import settings_manager
-import os
-import json
-from pathlib import Path
+
 
 # Helper for data path
 def get_data_dir() -> Path:
@@ -50,14 +52,14 @@ async def login_for_access_token(
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.get("/downloads", response_model=List[Package])
+@router.get("/downloads", response_model=list[Package])
 async def get_downloads(
     current_user: Annotated[User, Depends(deps.get_current_user)],
     api: Annotated[MockJDownloaderAPI, Depends(deps.get_jd_api)]
 ):
     return await api.get_packages()
 
-@router.get("/linkgrabber", response_model=List[Package])
+@router.get("/linkgrabber", response_model=list[Package])
 async def get_linkgrabber(
     current_user: Annotated[User, Depends(deps.get_current_user)],
     api: Annotated[MockJDownloaderAPI, Depends(deps.get_jd_api)]
@@ -74,7 +76,7 @@ async def confirm_all_linkgrabber(
 
 @router.post("/linkgrabber/move")
 async def move_to_dl(
-    package_ids: List[str],
+    package_ids: list[str],
     current_user: Annotated[User, Depends(deps.get_current_user)],
     api: Annotated[MockJDownloaderAPI, Depends(deps.get_jd_api)]
 ):
@@ -83,14 +85,14 @@ async def move_to_dl(
 
 @router.post("/downloads/links", response_model=str)
 async def add_links(
-    links: List[str],
+    links: list[str],
     current_user: Annotated[User, Depends(deps.get_current_user)],
     api: Annotated[MockJDownloaderAPI, Depends(deps.get_jd_api)]
 ):
     try:
         pkg_id = await api.add_links(links)
         return str(pkg_id)
-    except Exception as e:
+    except Exception:
         # Buffer if connection failed
         buffer_file = get_buffer_file()
         if not buffer_file.parent.exists():
@@ -99,7 +101,7 @@ async def add_links(
         buffer_data = []
         if buffer_file.exists():
             try:
-                with open(buffer_file, "r") as f:
+                with open(buffer_file) as f:
                     buffer_data = json.load(f)
             except:
                 pass
@@ -120,7 +122,7 @@ async def start_downloads(
 
 @router.post("/linkgrabber/delete")
 async def delete_linkgrabber_packages(
-    package_ids: List[str],
+    package_ids: list[str],
     current_user: Annotated[User, Depends(deps.get_current_user)],
     api: Annotated[MockJDownloaderAPI, Depends(deps.get_jd_api)]
 ):
@@ -129,7 +131,7 @@ async def delete_linkgrabber_packages(
 
 @router.post("/downloads/delete")
 async def delete_download_packages(
-    package_ids: List[str],
+    package_ids: list[str],
     current_user: Annotated[User, Depends(deps.get_current_user)],
     api: Annotated[MockJDownloaderAPI, Depends(deps.get_jd_api)]
 ):
@@ -157,7 +159,8 @@ async def stop_downloads(
     await api.stop_downloads()
     return {"status": "stopped"}
 
-from fastapi import UploadFile, File
+from fastapi import File, UploadFile
+
 
 @router.post("/linkgrabber/add-file")
 async def add_container_file(
@@ -174,7 +177,7 @@ async def add_container_file(
              raise HTTPException(status_code=400, detail=result)
         return {"status": "added", "filename": file.filename}
 
-    except Exception as e:
+    except Exception:
          # Buffer if connection failed (or other error but we assume conn for now essentially)
          # Save DLC to backend/data/buffer/
          buffer_dir = get_dlc_buffer_dir()
@@ -199,7 +202,7 @@ async def get_link_buffer(
     links = []
     if buffer_file.exists():
         try:
-            with open(buffer_file, "r") as f:
+            with open(buffer_file) as f:
                 links = json.load(f)
                 count = len(links)
         except:
@@ -216,7 +219,7 @@ async def replay_link_buffer(
     links = []
     if buffer_file.exists():
         try:
-            with open(buffer_file, "r") as f:
+            with open(buffer_file) as f:
                 links = json.load(f)
         except:
             pass
@@ -238,7 +241,7 @@ async def replay_link_buffer(
              raise HTTPException(status_code=500, detail=f"JD Error: {result}")
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Connection Failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Connection Failed: {e!s}")
 
 @router.get("/system/status")
 async def get_system_status(
@@ -258,7 +261,7 @@ async def get_system_status(
     buffer_count = 0
     if buffer_file.exists():
         try:
-            with open(buffer_file, "r") as f:
+            with open(buffer_file) as f:
                 buffer_data = json.load(f)
                 # Count total links across all packages
                 for entry in buffer_data:
@@ -303,7 +306,7 @@ async def get_buffer_details(
     packages = []
     if buffer_file.exists():
         try:
-            with open(buffer_file, "r") as f:
+            with open(buffer_file) as f:
                 packages = json.load(f)
         except:
             pass
@@ -340,7 +343,7 @@ async def delete_buffer_package(
         raise HTTPException(status_code=404, detail="Buffer file not found")
     
     try:
-        with open(buffer_file, "r") as f:
+        with open(buffer_file) as f:
             packages = json.load(f)
         
         if index < 0 or index >= len(packages):
@@ -389,7 +392,7 @@ async def clear_buffer(
     # Clear link buffer
     if buffer_file.exists():
         try:
-            with open(buffer_file, "r") as f:
+            with open(buffer_file) as f:
                 packages = json.load(f)
                 deleted_packages = len(packages)
             with open(buffer_file, "w") as f:
@@ -416,9 +419,12 @@ async def clear_buffer(
 # CNL Proxy Endpoints for Browser Extension
 # These endpoints allow the browser extension to forward CNL requests
 
-from src.cnl.decrypter import CNLDecrypter
-from fastapi import Form
 import re
+
+from fastapi import Form
+
+from src.cnl.decrypter import CNLDecrypter
+
 
 @router.post("/cnl/flash/check")
 async def cnl_proxy_check():
@@ -462,7 +468,7 @@ async def cnl_proxy_add(
     buffer_data = []
     if buffer_file.exists():
         try:
-            with open(buffer_file, "r") as f:
+            with open(buffer_file) as f:
                 buffer_data = json.load(f)
         except:
             pass

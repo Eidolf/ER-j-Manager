@@ -1,7 +1,8 @@
-from typing import List, Optional
-from uuid import UUID, uuid4
-from pydantic import BaseModel, Field
 from enum import Enum
+from uuid import uuid4
+
+from pydantic import BaseModel, Field
+
 
 class DownloadStatus(str, Enum):
     RUNNING = "RUNNING"
@@ -19,22 +20,22 @@ class Link(BaseModel):
     bytes_loaded: int = 0
     status: DownloadStatus = DownloadStatus.STOPPED
     speed: int = 0  # bytes per second
-    eta: Optional[int] = None # seconds
+    eta: int | None = None # seconds
 
 class Package(BaseModel):
     uuid: str = Field(default_factory=lambda: str(uuid4()))
     name: str
     save_to: str = "/downloads"
-    links: List[Link] = []
+    links: list[Link] = []
     total_bytes: int = 0
     loaded_bytes: int = 0
     child_count: int = 0
 
 class User(BaseModel):
     username: str
-    full_name: Optional[str] = None
-    email: Optional[str] = None
-    disabled: Optional[bool] = None
+    full_name: str | None = None
+    email: str | None = None
+    disabled: bool | None = None
 
 class UserInDB(User):
     hashed_password: str
@@ -44,4 +45,4 @@ class Token(BaseModel):
     token_type: str
 
 class TokenData(BaseModel):
-    username: Optional[str] = None
+    username: str | None = None

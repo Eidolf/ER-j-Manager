@@ -1,13 +1,15 @@
+
 import httpx
-from typing import List
-from src.domain.models import Package, Link, DownloadStatus
+
+from src.domain.models import DownloadStatus, Link, Package
 from src.infrastructure.api_interface import JDownloaderAPI
+
 
 class LocalJDownloaderAPI(JDownloaderAPI):
     def __init__(self, base_url: str):
         self.base_url = base_url
 
-    async def _query_links(self, endpoint: str) -> List[dict]:
+    async def _query_links(self, endpoint: str) -> list[dict]:
         async with httpx.AsyncClient() as client:
             try:
                 params = {
@@ -27,7 +29,7 @@ class LocalJDownloaderAPI(JDownloaderAPI):
             except:
                 return []
 
-    async def _query_packages(self, endpoint: str) -> List[Package]:
+    async def _query_packages(self, endpoint: str) -> list[Package]:
         # Determine link endpoint based on package endpoint
         link_endpoint = "downloadsV2/queryLinks" if "downloads" in endpoint else "linkgrabberv2/queryLinks"
         
@@ -54,21 +56,21 @@ class LocalJDownloaderAPI(JDownloaderAPI):
                 
                 # Group links by packageUUID
                 links_by_pkg = {}
-                for l in raw_links:
-                    pid = str(l.get("packageUUID", "0"))
+                for link in raw_links:
+                    pid = str(link.get("packageUUID", "0"))
                     if pid not in links_by_pkg:
                         links_by_pkg[pid] = []
                     
                     links_by_pkg[pid].append(Link(
-                        uuid=str(l.get("uuid", "0")),
-                        name=l.get("name", "Unknown"),
-                        url=l.get("url", ""),
-                        host=l.get("host", ""),
-                        bytes_total=l.get("bytesTotal", 0),
-                        bytes_loaded=l.get("bytesLoaded", 0),
-                        status=DownloadStatus.FINISHED if l.get("finished", False) else DownloadStatus.RUNNING, # Simplified
-                        speed=l.get("speed", 0),
-                        eta=l.get("eta", None)
+                        uuid=str(link.get("uuid", "0")),
+                        name=link.get("name", "Unknown"),
+                        url=link.get("url", ""),
+                        host=link.get("host", ""),
+                        bytes_total=link.get("bytesTotal", 0),
+                        bytes_loaded=link.get("bytesLoaded", 0),
+                        status=DownloadStatus.FINISHED if link.get("finished", False) else DownloadStatus.RUNNING, # Simplified
+                        speed=link.get("speed", 0),
+                        eta=link.get("eta", None)
                     ))
 
                 packages = []
@@ -86,19 +88,19 @@ class LocalJDownloaderAPI(JDownloaderAPI):
                     packages.append(pk)
                 return packages
             except httpx.RequestError as e:
-                print(f"JD API Connection Error ({endpoint}): {str(e)}")
-                raise Exception(f"Connection Failed: {str(e)}")
+                print(f"JD API Connection Error ({endpoint}): {e!s}")
+                raise Exception(f"Connection Failed: {e!s}")
             except Exception as e:
-                print(f"JD API Unexpected Error ({endpoint}): {str(e)}")
+                print(f"JD API Unexpected Error ({endpoint}): {e!s}")
                 raise
 
-    async def get_packages(self) -> List[Package]:
+    async def get_packages(self) -> list[Package]:
         return await self._query_packages("downloadsV2/queryPackages")
 
-    async def get_linkgrabber_packages(self) -> List[Package]:
+    async def get_linkgrabber_packages(self) -> list[Package]:
         return await self._query_packages("linkgrabberv2/queryPackages")
 
-    async def add_links(self, links: List[str], package_name: str = None) -> str:
+    async def add_links(self, links: list[str], package_name: str | None = None) -> str:
         async with httpx.AsyncClient() as client:
             endpoint = "/linkgrabberv2/addLinks"
             payload = {
@@ -139,7 +141,7 @@ class LocalJDownloaderAPI(JDownloaderAPI):
             resp = await client.post(f"{self.base_url}/downloadcontroller/stop")
             print(f"[JD-API] Stop Response: {resp.status_code} | {resp.text}")
 
-    async def move_to_dl(self, package_ids: List[str]) -> None:
+    async def move_to_dl(self, package_ids: list[str]) -> None:
         async with httpx.AsyncClient() as client:
             current_pkgs = await self.get_linkgrabber_packages()
             print(f"[JD-API] Debug - Available LinkGrabber IDs: {[p.uuid for p in current_pkgs]}")
@@ -167,7 +169,7 @@ class LocalJDownloaderAPI(JDownloaderAPI):
             print("[JD-API] All Move trials failed.")
 
     async def confirm_all_linkgrabber(self) -> None:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient():
             pkgs = await self.get_linkgrabber_packages()
             ids = [p.uuid for p in pkgs]
             if ids:
@@ -180,7 +182,7 @@ class LocalJDownloaderAPI(JDownloaderAPI):
                 raise Exception(f"JD Help Status {resp.status_code}")
             return resp.text
 
-    async def remove_linkgrabber_packages(self, package_ids: List[str]) -> None:
+    async def remove_linkgrabber_packages(self, package_ids: list[str]) -> None:
          async with httpx.AsyncClient() as client:
             try:
                 int_ids = [int(pid) for pid in package_ids if pid.isdigit()]
@@ -194,7 +196,7 @@ class LocalJDownloaderAPI(JDownloaderAPI):
 
             await client.post(f"{self.base_url}{endpoint}", json=payload)
 
-    async def remove_download_packages(self, package_ids: List[str]) -> None:
+    async def remove_download_packages(self, package_ids: list[str]) -> None:
          async with httpx.AsyncClient() as client:
             try:
                 int_ids = [int(pid) for pid in package_ids if pid.isdigit()]
@@ -207,26 +209,7 @@ class LocalJDownloaderAPI(JDownloaderAPI):
 
             await client.post(f"{self.base_url}{endpoint}", json=payload)
 
-    async def move_to_dl(self, package_ids: List[str]) -> None:
-        async with httpx.AsyncClient() as client:
-            try:
-                int_ids = [int(pid) for pid in package_ids if pid.isdigit()]
-            except:
-                int_ids = []
-
-            # moveToDownloadlist(long[] linkIds, long[] packageIds)
-            endpoint = "/linkgrabberv2/moveToDownloadlist"
-            payload = {"params": [ [], int_ids ]}
-            
-            # We must set startDownloads=True via a separate call or assuming this moves it to list where it starts if global start is on.
-            # Actually, moveToDownloadlist just moves. To start we might need logic, but user experience said it started.
-            # In V2, moveToDownloadlist usually autostarts if settings allow.
-            # Ref: https://my.jdownloader.org/developers/#tag_linkgrabberv2
-            
-            await client.post(f"{self.base_url}{endpoint}", json=payload)
-            # We can also force strict start if needed, but simple move is usually what "Start" means in this context.
-
-    async def set_download_directory(self, package_ids: List[str], directory: str) -> None:
+    async def set_download_directory(self, package_ids: list[str], directory: str) -> None:
         async with httpx.AsyncClient() as client:
             try:
                 int_ids = [int(pid) for pid in package_ids if pid.isdigit()]

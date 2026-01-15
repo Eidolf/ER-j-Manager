@@ -1,0 +1,23 @@
+# Ruff configuration for backend
+line-length = 150
+target-version = "py310"
+
+[lint]
+# Rules to ignore
+ignore = [
+    "E402",     # Module level import not at top of file (FastAPI patterns)
+    "PLW0603",  # Global statement (singleton pattern)
+    "PLR0912",  # Too many branches
+    "PLR0915",  # Too many statements
+    "PLR0913",  # Too many arguments
+    "PLC0415",  # Import not at top level (lazy imports)
+    "PLR2004",  # Magic value comparisons (status codes)
+    "B904",     # raise from (optional)
+    "B008",     # Function call in default arg (FastAPI File)
+    "F841",     # Unused variable
+    "E722",     # Bare except (sometimes needed for broad catching)
+    "E501",     # Line too long (we set 150 above)
+]
+
+[lint.per-file-ignores]
+"backend/src/infrastructure/mock_jd_api.py" = ["E501"]
