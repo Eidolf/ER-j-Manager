@@ -7,6 +7,8 @@ interface Settings {
     jd_port: number;
     use_mock: boolean;
     admin_password?: string;
+    default_download_path?: string;
+    use_default_download_path?: boolean;
 }
 
 interface SettingsModalProps {
@@ -179,7 +181,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         jd_host: 'host.docker.internal',
         jd_port: 3128,
         use_mock: true,
-        admin_password: ''
+        admin_password: '',
+        default_download_path: '',
+        use_default_download_path: false
     });
     const [loading, setLoading] = useState(true);
     const [testing, setTesting] = useState(false);
@@ -378,12 +382,49 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                         </div>
                                     </div>
 
-                                    {/* Admin Password removed from General tab */}
-
-
                                     {!settings.use_mock && (
-                                        <div className="text-xs text-yellow-500 bg-yellow-500/10 p-2 rounded">
+                                        <div className="text-xs text-yellow-500 bg-yellow-500/10 p-2 rounded mt-2">
                                             Note: Ensure your JDownloader has the Remote Control extension enabled on port {settings.jd_port}.
+                                        </div>
+                                    )}
+
+                                    {/* Admin Password removed from General tab */}
+                                    <div className="border-t border-gray-700 pt-4 pb-2 flex items-center justify-between">
+                                        <span className="text-sm text-gray-300 font-bold">Enable Default Download Path</span>
+                                        <button
+                                            onClick={() => setSettings({ ...settings, use_default_download_path: !settings.use_default_download_path })}
+                                            className={`w-12 h-6 rounded-full transition-colors relative ${settings.use_default_download_path ? 'bg-cyber-neon' : 'bg-gray-700'}`}
+                                        >
+                                            <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${settings.use_default_download_path ? 'left-7' : 'left-1'}`} />
+                                        </button>
+                                    </div>
+
+                                    {settings.use_default_download_path && (
+                                        <div className="animate-in fade-in slide-in-from-top-2 space-y-2 mb-4">
+                                            <label className="block text-sm text-gray-400 mb-1">Default Download Path</label>
+                                            <div className="glass-input-wrapper">
+                                                <div className="absolute inset-0 z-0 bg-transparent"
+                                                    style={{
+                                                        animation: `border-rotate ${5 + Math.random() * 2}s linear infinite`,
+                                                        animationDelay: `-${Math.random() * 5}s`
+                                                    }}
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={settings.default_download_path || ''}
+                                                    onChange={e => setSettings({ ...settings, default_download_path: e.target.value })}
+                                                    className="glass-input p-2"
+                                                    placeholder="/downloads/<jd:packagename>"
+                                                />
+                                            </div>
+                                            <div className="text-xs text-gray-400 mt-2 p-3 bg-gray-800/50 rounded border border-gray-700">
+                                                <p className="font-bold mb-2 text-gray-300">Supported variables:</p>
+                                                <div className="grid grid-cols-1 gap-1 text-cyber-neon/80 font-mono pl-2">
+                                                    <span>&lt;jd:packagename&gt;</span>
+                                                    <span>&lt;jd:simpledate&gt;</span>
+                                                    <span>&lt;jd:orgsource&gt;</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
 

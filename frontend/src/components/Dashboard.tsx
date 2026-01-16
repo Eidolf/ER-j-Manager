@@ -276,7 +276,7 @@ export const Dashboard: React.FC = () => {
 
     const handleSetDirectory = async () => {
         if (contextMenu.packageId) {
-            const dir = prompt("Enter Download Directory:\n\nSupported variables:\n<jd:packagename>\n<jd:simpledate>\n<jd:orgsource>\n\nExample: /home/downloads/<jd:packagename>");
+            const dir = prompt("Enter Download Directory:\n\nSupported variables:\n<jd:packagename>\n<jd:simpledate>\n<jd:orgsource>\n\nExample (Linux): /home/downloads/<jd:packagename>\nExample (Windows): C:\\Downloads\\<jd:packagename>");
             if (dir) {
                 try {
                     await api.post('/linkgrabber/set-directory', {

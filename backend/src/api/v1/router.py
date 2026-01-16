@@ -1,5 +1,6 @@
 import json
 import os
+import asyncio
 from datetime import timedelta
 from pathlib import Path
 from typing import Annotated
@@ -127,8 +128,23 @@ async def confirm_all_linkgrabber(
     current_user: Annotated[User, Depends(deps.get_current_user)],
     api: Annotated[MockJDownloaderAPI, Depends(deps.get_jd_api)]
 ):
+    # Manual implementation to ensure directory is set
+    pkgs = await api.get_linkgrabber_packages()
+    ids = [p.uuid for p in pkgs]
+    
+    if not ids:
+        return {"status": "confirmed", "count": 0}
+
+    # Check for default path setting
+    current_settings = settings_manager.load_settings()
+    if current_settings.use_default_download_path and current_settings.default_download_path:
+        print(f"[Router] Applying default download path: {current_settings.default_download_path}")
+        await api.set_download_directory(ids, current_settings.default_download_path)
+        # Give JD a moment to apply the change before moving
+        await asyncio.sleep(0.2)
+
     await api.confirm_all_linkgrabber()
-    return {"status": "confirmed"}
+    return {"status": "confirmed", "count": len(ids)}
 
 @router.post("/linkgrabber/move")
 async def move_to_dl(
@@ -136,6 +152,13 @@ async def move_to_dl(
     current_user: Annotated[User, Depends(deps.get_current_user)],
     api: Annotated[MockJDownloaderAPI, Depends(deps.get_jd_api)]
 ):
+    # Check for default path setting
+    current_settings = settings_manager.load_settings()
+    if current_settings.use_default_download_path and current_settings.default_download_path:
+        print(f"[Router] Applying default download path to selected: {current_settings.default_download_path}")
+        await api.set_download_directory(package_ids, current_settings.default_download_path)
+        await asyncio.sleep(0.2)
+        
     await api.move_to_dl(package_ids)
     return {"status": "moved"}
 

@@ -12,6 +12,8 @@ class JDSettings(BaseModel):
     jd_port: int = 3128
     use_mock: bool = False
     admin_password: str = "admin"
+    default_download_path: str = ""
+    use_default_download_path: bool = False
 
     @property
     def api_url(self) -> str:
