@@ -104,7 +104,16 @@ export const Dashboard: React.FC = () => {
 
     // Calculate total download speed from all packages
     const totalSpeed = packages.reduce((sum, pkg) => sum + (pkg.speed || 0), 0);
-    const totalRemainingBytes = packages.reduce((sum, pkg) => sum + Math.max(0, pkg.total_bytes - pkg.loaded_bytes), 0);
+
+    // Calculate remaining bytes ONLY for currently active (downloading) packages
+    // This prevents the ETA from being inflated by paused/stopped/queued downloads
+    const totalRemainingBytes = packages.reduce((sum, pkg) => {
+        if ((pkg.speed || 0) > 0) {
+            return sum + Math.max(0, pkg.total_bytes - pkg.loaded_bytes);
+        }
+        return sum;
+    }, 0);
+
     const isDownloading = totalSpeed > 0;
 
     // Calculate global ETA
