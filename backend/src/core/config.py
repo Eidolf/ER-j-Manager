@@ -10,9 +10,9 @@ class Settings(BaseSettings):
     # Security
     SECRET_KEY: str = "changethis-in-production-to-a-secure-random-string"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 7 Days
     
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+
     
     # JDownloader Configuration
     USE_MOCK_API: bool = False

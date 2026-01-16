@@ -311,7 +311,7 @@ export const Dashboard: React.FC = () => {
     const currentList = activeTab === 'downloads' ? packages : linkGrabberPackages;
 
     return (
-        <div className="min-h-screen p-8 text-gray-200 font-sans relative overflow-hidden">
+        <div className="min-h-screen p-4 md:p-8 text-gray-200 font-sans relative overflow-hidden">
             {/* Info Modal */}
             {showInfoModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
@@ -357,7 +357,7 @@ export const Dashboard: React.FC = () => {
             <div className="fixed inset-0 cyber-grid z-0 pointer-events-none" />
 
             <div className="relative z-10 max-w-6xl mx-auto">
-                <header className={`flex justify-between items-center mb-10 backdrop-blur-md p-6 rounded-2xl shadow-2xl relative z-50 transition-all duration-500 ${isDownloading
+                <header className={`flex flex-col md:flex-row justify-between items-center gap-4 mb-2 md:mb-10 backdrop-blur-md p-4 md:p-6 rounded-2xl shadow-2xl relative z-50 transition-all duration-500 ${isDownloading
                     ? 'bg-gradient-to-r from-green-900/30 via-cyber-card/80 to-green-900/30 border-2 border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.3)]'
                     : 'bg-cyber-card/80 border border-gray-800'
                     }`}>
@@ -369,18 +369,18 @@ export const Dashboard: React.FC = () => {
                         </div>
                     )}
 
-                    <div className="flex items-center gap-4 relative z-10">
-                        <div className="w-12 h-12 flex items-center justify-center">
+                    <div className="flex items-center gap-4 relative z-10 w-full md:w-auto justify-center md:justify-start">
+                        <div className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center shrink-0">
                             <img src="/logo.png" alt="ER-j-Manager Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_5px_rgba(236,72,153,0.5)]" />
                         </div>
-                        <div className="flex flex-col justify-center h-20">
-                            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyber-neon to-cyber-purple neon-text tracking-wider leading-none">
+                        <div className="flex flex-col justify-center h-auto md:h-20 py-2 md:py-0">
+                            <h1 className="text-xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyber-neon to-cyber-purple neon-text tracking-wider leading-none text-center md:text-left">
                                 JDownloader Manager
                             </h1>
                             {/* Speed Display with Equalizer */}
-                            <div className={`mt-1 transition-opacity duration-300 ${isDownloading ? 'opacity-100' : 'opacity-0'}`}>
+                            <div className={`mt-1 transition-opacity duration-300 ${isDownloading ? 'opacity-100' : 'opacity-0'} flex justify-center md:justify-start`}>
                                 {isDownloading ? (
-                                    <div className="flex flex-col">
+                                    <div className="flex flex-col items-center md:items-start">
                                         {/* ETA display - Above the download speed */}
                                         {etaSeconds > 0 && (
                                             <div className="text-xs text-cyber-neon font-mono mb-0.5 flex items-center gap-1.5 ml-1">
@@ -404,35 +404,34 @@ export const Dashboard: React.FC = () => {
                                         </div>
                                     </div>
                                 ) : (
-                                    // Reserve space to prevent layout shift if needed, or keep empty if h-20 handles it.
-                                    // Since h-20 anchors the height, this empty block isn't strictly necessary for height, 
-                                    // but helps maintain structure if flex justify changes.
-                                    <div className="h-10"></div>
+                                    // Reserve space to prevent layout shift if needed
+                                    // Adjusted height for mobile to be smaller
+                                    <div className="h-0 md:h-10"></div>
                                 )}
                             </div>
                         </div>
                     </div>
-                    <div className="flex gap-4">
+                    <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 w-full md:w-auto">
                         <div className="flex items-center bg-gray-800 rounded-lg p-1 border border-gray-700">
                             <button
                                 onClick={() => setActiveTab('downloads')}
-                                className={`px-4 py-2 rounded-md transition-all ${activeTab === 'downloads' ? 'bg-cyber-purple text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                                className={`px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-md transition-all ${activeTab === 'downloads' ? 'bg-cyber-purple text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                             >
                                 Downloads
                             </button>
                             <button
                                 onClick={() => setActiveTab('linkgrabber')}
-                                className={`px-4 py-2 rounded-md transition-all ${activeTab === 'linkgrabber' ? 'bg-cyber-purple text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                                className={`px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-md transition-all ${activeTab === 'linkgrabber' ? 'bg-cyber-purple text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                             >
                                 LinkGrabber
                             </button>
                         </div>
 
-                        <button onClick={handleStart} className="flex items-center gap-2 px-4 py-2 bg-cyber-neon/10 text-cyber-neon border border-cyber-neon rounded hover:bg-cyber-neon/20 transition-all shadow-[0_0_10px_rgba(34,211,238,0.2)]">
-                            <Play size={18} /> Start All
+                        <button onClick={handleStart} className="flex items-center gap-2 px-3 py-2 bg-cyber-neon/10 text-cyber-neon border border-cyber-neon rounded hover:bg-cyber-neon/20 transition-all shadow-[0_0_10px_rgba(34,211,238,0.2)]" title="Start All">
+                            <Play size={18} /> <span className="hidden sm:inline">Start All</span>
                         </button>
-                        <button onClick={handleStop} className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 border border-red-500 rounded hover:bg-red-500/20 transition-all">
-                            <Pause size={18} /> Stop All
+                        <button onClick={handleStop} className="flex items-center gap-2 px-3 py-2 bg-red-500/10 text-red-400 border border-red-500 rounded hover:bg-red-500/20 transition-all" title="Stop All">
+                            <Pause size={18} /> <span className="hidden sm:inline">Stop All</span>
                         </button>
                         <button onClick={() => setSettingsOpen(true)} className="p-2 bg-gray-700/50 text-gray-300 border border-gray-600 rounded hover:bg-gray-700 hover:text-cyber-neon transition-all">
                             <Settings size={20} />
@@ -490,143 +489,143 @@ export const Dashboard: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
-
-
+                                <button onClick={handleLogout} className="p-1.5 bg-red-500/10 text-red-400 border border-red-500/50 rounded-full hover:bg-red-500/20 hover:text-red-200 transition-all" title="Logout">
+                                    <LogOut size={16} />
+                                </button>
                             </div>
                         </div>
-
-                        <button onClick={handleLogout} className="p-2 bg-red-500/10 text-red-400 border border-red-500/50 rounded hover:bg-red-500/20 hover:text-red-200 transition-all" title="Logout">
-                            <LogOut size={20} />
-                        </button>
                     </div>
+
                 </header>
 
                 {/* Buffer Section */}
-                {bufferCount > 0 && (
-                    <div className="mb-6">
-                        <div
-                            className="p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-xl cursor-pointer"
-                            onClick={() => setBufferExpanded(!bufferExpanded)}
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3 text-yellow-500">
-                                    <div className="w-2 h-2 rounded-full bg-yellow-500 animate-ping" />
-                                    <span className="font-semibold">⚠️ {bufferCount} Items waiting for JDownloader Connection</span>
-                                    <span className="text-sm text-yellow-400/70">(click to {bufferExpanded ? 'collapse' : 'expand'})</span>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={async (e) => {
-                                            e.stopPropagation();
-                                            try {
-                                                const res = await api.post('/system/buffer/replay');
-                                                alert(`Replay triggered. ${res.data.status}`);
-                                                fetchData();
-                                                fetchData();
-                                                fetchBufferDetails();
-                                            } catch (e: unknown) {
-                                                alert(`Replay Failed: ${getErrorMessage(e)}`);
-                                            }
-                                        }}
-                                        className="px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-500 border border-yellow-500 rounded-lg transition-all"
-                                    >
-                                        Retry Now
-                                    </button>
-                                    <button
-                                        onClick={async (e) => {
-                                            e.stopPropagation();
-                                            if (confirm('Clear entire buffer? This cannot be undone.')) {
+                {
+                    bufferCount > 0 && (
+                        <div className="mb-6">
+                            <div
+                                className="p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-xl cursor-pointer"
+                                onClick={() => setBufferExpanded(!bufferExpanded)}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3 text-yellow-500">
+                                        <div className="w-2 h-2 rounded-full bg-yellow-500 animate-ping" />
+                                        <span className="font-semibold">⚠️ {bufferCount} Items waiting for JDownloader Connection</span>
+                                        <span className="text-sm text-yellow-400/70">(click to {bufferExpanded ? 'collapse' : 'expand'})</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={async (e) => {
+                                                e.stopPropagation();
                                                 try {
-                                                    await api.delete('/buffer/clear');
+                                                    const res = await api.post('/system/buffer/replay');
+                                                    alert(`Replay triggered. ${res.data.status}`);
+                                                    fetchData();
                                                     fetchData();
                                                     fetchBufferDetails();
                                                 } catch (e: unknown) {
-                                                    alert(`Clear Failed: ${getErrorMessage(e)}`);
+                                                    alert(`Replay Failed: ${getErrorMessage(e)}`);
                                                 }
-                                            }
-                                        }}
-                                        className="px-4 py-2 bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500 rounded-lg transition-all"
-                                    >
-                                        Clear All
-                                    </button>
+                                            }}
+                                            className="px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-500 border border-yellow-500 rounded-lg transition-all"
+                                        >
+                                            Retry Now
+                                        </button>
+                                        <button
+                                            onClick={async (e) => {
+                                                e.stopPropagation();
+                                                if (confirm('Clear entire buffer? This cannot be undone.')) {
+                                                    try {
+                                                        await api.delete('/buffer/clear');
+                                                        fetchData();
+                                                        fetchBufferDetails();
+                                                    } catch (e: unknown) {
+                                                        alert(`Clear Failed: ${getErrorMessage(e)}`);
+                                                    }
+                                                }
+                                            }}
+                                            className="px-4 py-2 bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500 rounded-lg transition-all"
+                                        >
+                                            Clear All
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
+
+                            {/* Expanded Buffer Details */}
+                            {bufferExpanded && (
+                                <div className="mt-2 p-4 bg-gray-900/50 border border-gray-700 rounded-xl space-y-3 max-h-96 overflow-y-auto">
+                                    {bufferDetails.packages.map((pkg, index: number) => (
+                                        <div key={index} className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <div className="font-semibold text-cyber-neon">{pkg.package || 'Unnamed Package'}</div>
+                                                    <div className="text-sm text-gray-400 mt-1">
+                                                        {pkg.links?.length || 0} links
+                                                    </div>
+                                                    <ul className="text-xs text-gray-500 mt-2 space-y-1 max-h-24 overflow-y-auto">
+                                                        {pkg.links?.slice(0, 5).map((link: string, i: number) => (
+                                                            <li key={i} className="truncate max-w-md">{link}</li>
+                                                        ))}
+                                                        {pkg.links?.length > 5 && (
+                                                            <li className="text-gray-600">...and {pkg.links.length - 5} more</li>
+                                                        )}
+                                                    </ul>
+                                                </div>
+                                                <button
+                                                    onClick={async () => {
+                                                        try {
+                                                            await api.delete(`/buffer/package/${index}`);
+                                                            fetchData();
+                                                            fetchBufferDetails();
+                                                        } catch (e: unknown) {
+                                                            alert(`Delete Failed: ${getErrorMessage(e)}`);
+                                                        }
+                                                    }}
+                                                    className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded transition-all"
+                                                    title="Delete Package"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {bufferDetails.dlc_files.map((dlc) => (
+                                        <div key={dlc.filename} className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <div className="font-semibold text-purple-400">📦 {dlc.filename}</div>
+                                                    <div className="text-sm text-gray-400">
+                                                        {(dlc.size / 1024).toFixed(1)} KB
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={async () => {
+                                                        try {
+                                                            await api.delete(`/buffer/dlc/${dlc.filename}`);
+                                                            fetchData();
+                                                            fetchBufferDetails();
+                                                        } catch (e: unknown) {
+                                                            alert(`Delete Failed: ${getErrorMessage(e)}`);
+                                                        }
+                                                    }}
+                                                    className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded transition-all"
+                                                    title="Delete DLC"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {bufferDetails.packages.length === 0 && bufferDetails.dlc_files.length === 0 && (
+                                        <div className="text-gray-500 text-center py-4">Buffer is empty</div>
+                                    )}
+                                </div>
+                            )}
                         </div>
-
-                        {/* Expanded Buffer Details */}
-                        {bufferExpanded && (
-                            <div className="mt-2 p-4 bg-gray-900/50 border border-gray-700 rounded-xl space-y-3 max-h-96 overflow-y-auto">
-                                {bufferDetails.packages.map((pkg, index: number) => (
-                                    <div key={index} className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <div className="font-semibold text-cyber-neon">{pkg.package || 'Unnamed Package'}</div>
-                                                <div className="text-sm text-gray-400 mt-1">
-                                                    {pkg.links?.length || 0} links
-                                                </div>
-                                                <ul className="text-xs text-gray-500 mt-2 space-y-1 max-h-24 overflow-y-auto">
-                                                    {pkg.links?.slice(0, 5).map((link: string, i: number) => (
-                                                        <li key={i} className="truncate max-w-md">{link}</li>
-                                                    ))}
-                                                    {pkg.links?.length > 5 && (
-                                                        <li className="text-gray-600">...and {pkg.links.length - 5} more</li>
-                                                    )}
-                                                </ul>
-                                            </div>
-                                            <button
-                                                onClick={async () => {
-                                                    try {
-                                                        await api.delete(`/buffer/package/${index}`);
-                                                        fetchData();
-                                                        fetchBufferDetails();
-                                                    } catch (e: unknown) {
-                                                        alert(`Delete Failed: ${getErrorMessage(e)}`);
-                                                    }
-                                                }}
-                                                className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded transition-all"
-                                                title="Delete Package"
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {bufferDetails.dlc_files.map((dlc) => (
-                                    <div key={dlc.filename} className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                <div className="font-semibold text-purple-400">📦 {dlc.filename}</div>
-                                                <div className="text-sm text-gray-400">
-                                                    {(dlc.size / 1024).toFixed(1)} KB
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={async () => {
-                                                    try {
-                                                        await api.delete(`/buffer/dlc/${dlc.filename}`);
-                                                        fetchData();
-                                                        fetchBufferDetails();
-                                                    } catch (e: unknown) {
-                                                        alert(`Delete Failed: ${getErrorMessage(e)}`);
-                                                    }
-                                                }}
-                                                className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded transition-all"
-                                                title="Delete DLC"
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {bufferDetails.packages.length === 0 && bufferDetails.dlc_files.length === 0 && (
-                                    <div className="text-gray-500 text-center py-4">Buffer is empty</div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
+                    )
+                }
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-0">
                     <div className="lg:col-span-2 space-y-6">
@@ -635,24 +634,24 @@ export const Dashboard: React.FC = () => {
                                 {currentList.map(pkg => (
                                     <div
                                         key={pkg.uuid}
-                                        className="bg-cyber-card border border-gray-800 rounded-xl p-6 hover:border-cyber-purple/50 transition-all shadow-lg group relative overflow-hidden mb-4 cursor-context-menu"
+                                        className="bg-cyber-card border border-gray-800 rounded-xl p-4 md:p-6 hover:border-cyber-purple/50 transition-all shadow-lg group relative overflow-hidden mb-4 cursor-context-menu"
                                         onContextMenu={(e) => handleContextMenu(e, pkg.uuid)}
                                     >
                                         <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-cyber-neon to-cyber-purple opacity-0 group-hover:opacity-100 transition-opacity" />
-                                        <div className="flex justify-between items-start mb-4 cursor-pointer" onClick={() => togglePackage(pkg.uuid)}>
-                                            <div className="flex items-center gap-3">
-                                                <div className={`transition-transform duration-300 ${expandedPackages.has(pkg.uuid) ? 'rotate-90' : ''}`}>
+                                        <div className="flex flex-col sm:flex-row justify-between items-start mb-4 cursor-pointer gap-2 sm:gap-0" onClick={() => togglePackage(pkg.uuid)}>
+                                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                                                <div className={`transition-transform duration-300 ${expandedPackages.has(pkg.uuid) ? 'rotate-90' : ''} shrink-0`}>
                                                     <Play size={12} className="text-gray-500 fill-gray-500" />
                                                 </div>
-                                                <div>
-                                                    <h3 className="text-xl font-semibold text-white group-hover:text-cyber-neon transition-colors select-none">{pkg.name}</h3>
+                                                <div className="min-w-0 flex-1 sm:flex-initial">
+                                                    <h3 className="text-lg md:text-xl font-semibold text-white group-hover:text-cyber-neon transition-colors select-none truncate pr-2">{pkg.name}</h3>
                                                     <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
                                                         <span className={`w-2 h-2 rounded-full ${pkg.status === 'RUNNING' ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`} />
                                                         {pkg.status_text || pkg.status}
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="text-right">
+                                            <div className="text-left sm:text-right w-full sm:w-auto mt-2 sm:mt-0 pl-7 sm:pl-0">
                                                 <div className="text-sm text-gray-400">{(pkg.loaded_bytes / 1024 / 1024).toFixed(2)} MB / {(pkg.total_bytes / 1024 / 1024).toFixed(2)} MB</div>
                                                 <div className="text-xs text-cyber-purple mt-1">
                                                     {pkg.links.length} files
@@ -711,7 +710,7 @@ export const Dashboard: React.FC = () => {
                                     value={newLinks}
                                     onChange={e => setNewLinks(e.target.value)}
                                 />
-                                <div className="mt-4 flex gap-4">
+                                <div className="mt-4 flex flex-col sm:flex-row gap-4">
                                     <button
                                         onClick={handleAddLinks}
                                         className="flex-1 bg-cyber-purple hover:bg-cyber-purple/80 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-cyber-purple/20 hover:shadow-cyber-purple/40 active:scale-95"
@@ -746,7 +745,7 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </div >
             <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
             {

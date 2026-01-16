@@ -14,6 +14,22 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+// Add response interceptor to handle 401s (Token Expiry)
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            // Token expired or invalid
+            localStorage.removeItem('token');
+            // If we are not already on the login page, redirect
+            if (!window.location.pathname.includes('/login')) {
+                window.location.href = '/login';
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 export interface Package {
     uuid: string;
     name: string;

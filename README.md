@@ -32,9 +32,9 @@ services:
     image: ghcr.io/eidolf/er-j-manager:latest
     container_name: jdownloader-manager
     # If you cannot connect to JD on the host (bound to 127.0.0.1), uncomment this and comment out 'ports':
-    network_mode: "host"
-    # ports:
-    #  - "13040:13040"
+    # network_mode: "host"
+    ports:
+      - "13040:13040"
     # Mapping "host.docker.internal" allows the container to talk to your Host OS
     extra_hosts:
       - "host.docker.internal:host-gateway"
