@@ -22,6 +22,7 @@ export interface Package {
     loaded_bytes: number;
     status: string;
     speed?: number;  // Current download speed in bytes/sec
+    status_text?: string; // Raw status text from JD API
 }
 
 export interface Link {

@@ -31,6 +31,7 @@ class Package(BaseModel):
     loaded_bytes: int = 0
     child_count: int = 0
     speed: int = 0  # Aggregated speed from all links (bytes per second)
+    status_text: str | None = None # Raw status text from JD API
 
 class User(BaseModel):
     username: str

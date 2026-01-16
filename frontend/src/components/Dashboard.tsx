@@ -648,7 +648,7 @@ export const Dashboard: React.FC = () => {
                                                     <h3 className="text-xl font-semibold text-white group-hover:text-cyber-neon transition-colors select-none">{pkg.name}</h3>
                                                     <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
                                                         <span className={`w-2 h-2 rounded-full ${pkg.status === 'RUNNING' ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`} />
-                                                        {pkg.status}
+                                                        {pkg.status_text || pkg.status}
                                                     </div>
                                                 </div>
                                             </div>

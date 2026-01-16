@@ -92,7 +92,8 @@ class LocalJDownloaderAPI(JDownloaderAPI):
                         loaded_bytes=p.get("bytesLoaded", 0),
                         child_count=p.get("childCount", 0),
                         links=pkg_links,
-                        speed=pkg_speed
+                        speed=pkg_speed,
+                        status_text=p.get("status")
                     )
                     packages.append(pk)
                 return packages
