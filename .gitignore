@@ -26,4 +26,5 @@ Thumbs.db
 *.pem
 backend/data/
 *.crx
+!backend/static/edge.crx
 *.zip
