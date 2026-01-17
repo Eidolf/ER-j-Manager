@@ -6,12 +6,22 @@ RUN npm ci
 COPY frontend/ .
 RUN npm run build
 
-# Stage 2: Runtime
+# Stage 2: Build Extension
+FROM python:3.14-slim as extension-builder
+WORKDIR /app
+RUN apt-get update && apt-get install -y openssl
+COPY backend/static/extension_source ./extension_source
+COPY scripts/pack_crx.py ./
+# Generate CRX (creates temporary key automatically)
+RUN python pack_crx.py extension_source/jd-manager-extension edge.crx
+
+# Stage 3: Runtime
 FROM python:3.14-slim as runtime
 
 WORKDIR /app
 
 # Install system dependencies if needed (e.g. curl for healthcheck)
+# Note: Cleaning up apt lists to keep image small
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Copy backend requirements
@@ -27,8 +37,8 @@ COPY docs ./docs
 # Copy built frontend assets
 COPY --from=frontend-builder /app/frontend/dist /app/static
 
-# Copy generated extension into static (merge with frontend)
-COPY backend/static/edge.crx /app/static/edge.crx
+# Copy generated extension into static
+COPY --from=extension-builder /app/edge.crx /app/static/edge.crx
 
 # Env vars
 ENV PYTHONPATH=/app
