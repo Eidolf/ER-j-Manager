@@ -56,13 +56,22 @@ async def check_and_replay_links():
     while True:
         await asyncio.sleep(5)
         try:
-            # Check if JD is online first before processing anything
+            # Check if JD is online (local API reachable)
             is_online = False
             try:
-                help_txt = await api.get_help()
-                if help_txt:
-                    is_online = True
-            except:
+                # Use the robust status check we implemented
+                status = await api.get_myjd_connection_status()
+                # If we get a valid status (even if "MyJD Not Connected" or "Device: ..."), 
+                # it means the LOCAL API is responding, which is all we need to add links.
+                # Use specific check: if config is reachable, we are good.
+                if status: 
+                     # Check if we got a valid dict response
+                     if isinstance(status, dict) and (status.get("online") or "Device" in status.get("status", "")):
+                        is_online = True
+                     elif "status" in status: # Fallback
+                        is_online = True
+            except Exception as e:
+                logger.debug(f"Replayer online check failed: {e}")
                 pass
                 
             if is_online:

@@ -11,7 +11,7 @@ FROM python:3.14-slim as extension-builder
 WORKDIR /app
 RUN apt-get update && apt-get install -y openssl
 COPY backend/static/extension_source ./extension_source
-COPY scripts/pack_crx.py ./
+COPY scripts/pack_crx3.py ./pack_crx.py
 # Generate CRX (creates temporary key automatically)
 RUN python pack_crx.py extension_source/jd-manager-extension edge.crx
 
