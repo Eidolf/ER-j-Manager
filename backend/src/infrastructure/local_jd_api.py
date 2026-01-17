@@ -110,8 +110,16 @@ class LocalJDownloaderAPI(JDownloaderAPI):
     async def add_links(self, links: list[str], package_name: str | None = None) -> str:
         async with httpx.AsyncClient() as client:
             endpoint = "/linkgrabberv2/addLinks"
+            # Ensure all links are strings to prevent TypeError
+            safe_links = []
+            for l in links:
+                if isinstance(l, dict) and "url" in l:
+                    safe_links.append(str(l["url"]))
+                else:
+                    safe_links.append(str(l))
+
             payload = {
-                "links": "\n".join(links),
+                "links": "\n".join(safe_links),
                 "autostart": False, # User requested no autostart
                 "deepDecrypt": True,
                 "packageName": package_name  # Optional package name for grouping
