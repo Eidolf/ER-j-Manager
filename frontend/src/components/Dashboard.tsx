@@ -35,8 +35,24 @@ export const Dashboard: React.FC = () => {
     useEffect(() => {
         localStorage.setItem('activeTab', activeTab);
     }, [activeTab]);
+
     const [newLinks, setNewLinks] = useState('');
     const [settingsOpen, setSettingsOpen] = useState(false);
+
+    // Handle Share Target API (PWA)
+    useEffect(() => {
+        if (window.location.pathname === '/share-target') {
+            const params = new URLSearchParams(window.location.search);
+            const text = params.get('text') || '';
+            const url = params.get('url') || '';
+            const sharedContent = [text, url].filter(Boolean).join('\n');
+            if (sharedContent) {
+                setNewLinks(sharedContent);
+                window.history.replaceState({}, '', '/');
+            }
+        }
+    }, []);
+
     const [expandedPackages, setExpandedPackages] = useState<Set<string>>(new Set());
 
     const togglePackage = (uuid: string) => {

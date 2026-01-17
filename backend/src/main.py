@@ -163,8 +163,25 @@ def health_check():
 def readiness_check():
     return {"status": "ready"}
 
+@app.get("/cwd")
+def get_cwd():
+    return {"cwd": os.getcwd(), "files": os.listdir(".")}
+
+# PWA Share Target Support - Must be before static mount
+@app.get("/share-target")
+async def share_target():
+    """
+    Serve the main SPA for the share target route so the frontend router can handle it.
+    This is required because the PWA manifests points to /share-target which might not exist as a file.
+    """
+    if os.path.exists("static/index.html"):
+        return FileResponse("static/index.html", media_type="text/html")
+    # Fallback for local dev if static doesn't exist (though usually run via Vite there)
+    return {"message": "Share Target: Frontend not served statically here"}
+
 import os
 
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 # Mount static files if they exist (prod/docker)

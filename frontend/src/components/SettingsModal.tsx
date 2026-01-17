@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { X, Save, Server, Plug, Download, Settings as SettingsIcon, Book, Copy, Check, Shield, AlertTriangle } from 'lucide-react';
+import { Download, Settings as SettingsIcon, X, Server, Shield, Plug, Book, Smartphone, Check, Copy, Save, AlertTriangle } from 'lucide-react';
 
 interface Settings {
     jd_host: string;
@@ -336,6 +336,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     >
                         <Shield size={16} /> Security
                     </button>
+                    <button
+                        onClick={() => setActiveTab('mobile')}
+                        className={`px-3 py-2 rounded transition-colors flex items-center gap-2 ${activeTab === 'mobile' ? 'bg-cyber-purple/20 text-cyber-neon' : 'text-gray-400 hover:text-white'}`}
+                    >
+                        <Smartphone size={16} /> Smartphone
+                    </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
@@ -343,6 +349,60 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                         <div className="text-center py-8 text-cyber-neon animate-pulse">Loading Configuration...</div>
                     ) : (
                         <>
+                            {activeTab === 'mobile' && (
+                                <div className="space-y-6">
+                                    <div className="bg-black/40 p-4 rounded-lg border border-gray-800">
+                                        <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                                            <Smartphone size={20} className="text-cyber-neon" /> 1. Install App (PWA)
+                                        </h3>
+                                        <p className="text-gray-400 text-sm mb-4">
+                                            Install this interface as a native app on your phone to get full screen experience and "Share to JDownloader" feature.
+                                        </p>
+                                        <ol className="list-decimal list-inside text-gray-300 text-sm space-y-2 ml-2">
+                                            <li>Open this page in <b>Chrome</b> (Android) or <b>Safari</b> (iOS).</li>
+                                            <li>Tap the browser menu (Three dots or Share icon).</li>
+                                            <li>Select <b>"Add to Home Screen"</b> or "Install App".</li>
+                                            <li>Usage: While browsing, tap <b>Share</b> &rarr; <b>JDownloader Manager</b> to add links properly.</li>
+                                        </ol>
+                                    </div>
+
+                                    <div className="bg-black/40 p-4 rounded-lg border border-gray-800">
+                                        <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                                            <Plug size={20} className="text-cyber-neon" /> 2. Enable Click'n'Load (Android)
+                                        </h3>
+                                        <p className="text-gray-400 text-sm mb-4">
+                                            Standard Chrome on Android blocks extensions. To use Click'n'Load buttons, you need <b>Microsoft Edge Canary</b>.
+                                        </p>
+
+                                        <div className="space-y-4">
+                                            <div className="border-l-2 border-cyber-purple pl-4">
+                                                <h4 className="font-bold text-white text-sm mb-1">Step A: Prepare Edge Canary</h4>
+                                                <ul className="list-disc list-inside text-gray-400 text-xs space-y-1">
+                                                    <li>Install "Microsoft Edge Canary" from Play Store.</li>
+                                                    <li>Go to <code>edge://settings/about</code> via menu.</li>
+                                                    <li>Tap "Edge Canary Version" <b>5 times</b> to enable Developer Options.</li>
+                                                    <li>Go to <b>Settings</b> &rarr; <b>Developer Options</b> &rarr; Enable "Extension install by crx".</li>
+                                                </ul>
+                                            </div>
+
+                                            <div className="border-l-2 border-cyber-purple pl-4">
+                                                <h4 className="font-bold text-white text-sm mb-1">Step B: Install Plugin</h4>
+                                                <p className="text-gray-400 text-xs mb-2">Download the dedicated mobile extension (.crx) below.</p>
+                                                <a
+                                                    href={api.defaults.baseURL ? `${api.defaults.baseURL}/extension/edge.crx` : '/api/v1/extension/edge.crx'}
+                                                    download="edge.crx"
+                                                    className="inline-flex items-center gap-2 px-3 py-2 bg-cyber-purple/20 hover:bg-cyber-purple/40 text-cyber-neon rounded transition-colors text-sm border border-cyber-purple/50"
+                                                >
+                                                    <Download size={16} /> Download Extension (.crx)
+                                                </a>
+                                                <p className="text-gray-500 text-[10px] mt-2">
+                                                    After downloading, open Edge Canary &rarr; Developer Options &rarr; "Extension install by crx" &rarr; Select the file.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                             {activeTab === 'general' && (
                                 <div className="space-y-4">
                                     <div>
@@ -495,6 +555,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                         <li>Go to <strong>Settings</strong> &gt; <strong>Advanced Settings</strong>.</li>
                                         <li>Search for <code>RemoteAPI</code>.</li>
                                         <li>Enable the setting: <br /><code className="bg-gray-800 px-1 rounded text-cyber-neon">RemoteAPI: Deprecated Api Enabled</code>.</li>
+                                        <li>Disable the setting: <code className="bg-gray-800 px-1 rounded text-red-400">RemoteAPI: Deprecated Api Localhost Only</code>.</li>
                                         <li>Restart JDownloader 2.</li>
                                     </ol>
                                     <p className="mt-6 text-xs text-gray-400 bg-gray-900/50 p-3 rounded border border-gray-800 border-l-2 border-l-cyber-purple">

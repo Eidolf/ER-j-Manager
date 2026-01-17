@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
 from pydantic import BaseModel
@@ -591,3 +592,20 @@ async def cnl_proxy_add(
         json.dump(buffer_data, f)
     
     return {"status": "success", "links_added": len(links), "package": package_entry["package"]}
+
+@router.get("/extension/edge.crx")
+async def get_edge_extension():
+    """Serve the generated CRX extension for Android."""
+    # backend/src/api/v1/router.py -> ... -> backend
+    # Direct relative path since we know CWD is project root (backend)
+    crx_path = "static/edge.crx"
+    
+    if not os.path.exists(crx_path):
+        raise HTTPException(status_code=404, detail="Extension file not found")
+
+    return FileResponse(
+        path=crx_path, 
+        filename="edge.crx", 
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": "attachment; filename=edge.crx"}
+    )

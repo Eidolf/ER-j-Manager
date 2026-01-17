@@ -1,1 +1,29 @@
 jd2/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.venv
+poetry.lock
+
+# Node
+node_modules/
+dist/
+build/
+.npm
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project Specific
+*.pem
+backend/data/
+*.crx
+*.zip
