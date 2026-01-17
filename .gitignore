@@ -28,3 +28,5 @@ backend/data/
 *.crx
 !backend/static/edge.crx
 *.zip
+!backend/static/edge.zip
+!backend/static/browser-extension.zip

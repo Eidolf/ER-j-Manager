@@ -32,6 +32,8 @@ COPY --from=frontend-builder /app/frontend/dist /app/static
 # 2. Browser Extension (Prebuilt)
 # We now use the manually provided CRX3 file as it is verified to work on Android
 COPY backend/static/edge.crx /app/static/edge.crx
+COPY backend/static/edge.zip /app/static/edge.zip
+COPY backend/static/browser-extension.zip /app/static/browser-extension.zip
 
 # Create data directory
 RUN mkdir -p /app/data

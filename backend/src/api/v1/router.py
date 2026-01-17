@@ -637,3 +637,53 @@ async def get_edge_extension():
         media_type="application/x-chrome-extension",
         headers={"Content-Disposition": "attachment; filename=edge.crx"}
     )
+
+@router.get("/extension/edge.zip")
+async def get_edge_extension_zip():
+    """Serve the zipped extension for Android."""
+    candidates = [
+        Path("static/edge.zip"),
+        Path(__file__).resolve().parent.parent.parent.parent / "static" / "edge.zip",
+        Path("/app/static/edge.zip")
+    ]
+
+    zip_path = None
+    for p in candidates:
+        if p.exists():
+            zip_path = p
+            break
+            
+    if not zip_path:
+        raise HTTPException(status_code=404, detail="Extension zip not found")
+
+    return FileResponse(
+        path=zip_path, 
+        filename="edge.zip", 
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=edge.zip"}
+    )
+
+@router.get("/browser-extension.zip")
+async def get_browser_extension_zip():
+    """Serve the zipped browser extension source code."""
+    candidates = [
+        Path("static/browser-extension.zip"),
+        Path(__file__).resolve().parent.parent.parent.parent / "static" / "browser-extension.zip",
+        Path("/app/static/browser-extension.zip")
+    ]
+
+    zip_path = None
+    for p in candidates:
+        if p.exists():
+            zip_path = p
+            break
+            
+    if not zip_path:
+        raise HTTPException(status_code=404, detail="Browser extension zip not found")
+
+    return FileResponse(
+        path=zip_path, 
+        filename="browser-extension.zip", 
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=browser-extension.zip"}
+    )

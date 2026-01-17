@@ -389,14 +389,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                                 <h4 className="font-bold text-white text-sm mb-1">Step B: Install Plugin</h4>
                                                 <p className="text-gray-400 text-xs mb-2">Download the dedicated mobile extension (.crx) below.</p>
                                                 <a
-                                                    href={api.defaults.baseURL ? `${api.defaults.baseURL}/extension/edge.crx` : '/api/v1/extension/edge.crx'}
-                                                    download="edge.crx"
+                                                    href={api.defaults.baseURL ? `${api.defaults.baseURL}/extension/edge.zip` : '/api/v1/extension/edge.zip'}
+                                                    download="edge.zip"
                                                     className="inline-flex items-center gap-2 px-3 py-2 bg-cyber-purple/20 hover:bg-cyber-purple/40 text-cyber-neon rounded transition-colors text-sm border border-cyber-purple/50"
                                                 >
-                                                    <Download size={16} /> Download Extension (.crx)
+                                                    <Download size={16} /> Download Extension (.zip)
                                                 </a>
                                                 <p className="text-gray-500 text-[10px] mt-2 mb-4">
-                                                    After downloading, open Edge Canary &rarr; Developer Options &rarr; "Extension install by crx" &rarr; Select the file.
+                                                    <strong>Important:</strong> Unzip the downloaded file first! Then open Edge Canary &rarr; Developer Options &rarr; "Extension install by crx" &rarr; Select the extracted <code>edge.crx</code> file.
                                                 </p>
 
                                                 <h4 className="font-bold text-white text-sm mb-1">Step C: Configuration</h4>
@@ -605,7 +605,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                     <div>
                                         <h4 className="font-semibold text-white mb-3 flex items-center gap-2"><Download size={16} /> Download</h4>
                                         <a
-                                            href="/browser-extension.zip"
+                                            href={api.defaults.baseURL ? `${api.defaults.baseURL}/browser-extension.zip` : '/browser-extension.zip'}
                                             download="jd-manager-cnl-bridge.zip"
                                             target="_blank"
                                             rel="noopener noreferrer"
