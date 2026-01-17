@@ -311,14 +311,25 @@ async def replay_link_buffer(
     try:
         # Check help first to fail fast on connection
         await api.get_help() 
-        result = await api.add_links(links)
         
-        if "ok" in result or "success" in result:
-             with open(buffer_file, "w") as f:
-                json.dump([], f)
-             return {"status": "replayed", "count": len(links)}
-        else:
-             raise HTTPException(status_code=500, detail=f"JD Error: {result}")
+        count = 0
+        for entry in links:
+             # Handle package objects
+             if isinstance(entry, dict):
+                 pkg_links = entry.get("links", [])
+                 pkg_name = entry.get("package", "CNL Package")
+                 if pkg_links:
+                     await api.add_links(pkg_links, package_name=pkg_name)
+                     count += 1
+             else:
+                 # Legacy string link
+                 if entry:
+                     await api.add_links([entry])
+                     count += 1
+
+        with open(buffer_file, "w") as f:
+            json.dump([], f)
+        return {"status": "replayed", "count": count}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Connection Failed: {e!s}")

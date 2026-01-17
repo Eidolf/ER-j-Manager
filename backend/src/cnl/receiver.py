@@ -93,32 +93,65 @@ async def add_crypted(
     print(f"DEBUG: Decrypted {len(links)} links for package '{package}'")
     logger.info(f"Decrypted {len(links)} links.")
     
-    # 3. Buffer Links (as structured package)
-    buffer_data = []
-    if BUFFER_FILE.exists():
-        try:
-            with open(BUFFER_FILE) as f:
-                buffer_data = json.load(f)
-        except:
-            buffer_data = []
+    # 3. Try Direct Add or Buffer
+    # If JD is online, add directly to avoid "Offline Queue" persistence
+    from src.infrastructure.local_jd_api import LocalJDownloaderAPI
+    # Use settings_manager to get correct JD URL
+    from src.infrastructure.settings_manager import settings_manager
+    current = settings_manager.load_settings()
+    api = LocalJDownloaderAPI(current.api_url)
     
-    # Store as package object for grouped replay
-    # Format: {"package": "name", "links": [...], "passwords": "..."}
-    package_entry = {
-        "package": package or source or "CNL Package",
-        "links": links,
-        "passwords": passwords
-    }
-    buffer_data.append(package_entry)
-    
+    added_directly = False
     try:
-        with open(BUFFER_FILE, "w") as f:
-            json.dump(buffer_data, f)
-        print("DEBUG: Links buffered successfully")
-    except Exception as e:
-        print(f"DEBUG: Failed to write to buffer: {e}")
+        # Quick online check (optional, or just try add_links)
+        # We try add_links directly. if it fails it throws.
+        # But we want to check status smartly first? 
+        # Actually `add_links` usually throws if connection fails.
+        # Let's try add_links.
         
-    logger.info("Links buffered.")
+        # We need to construct the payload for single package
+        # Note: receiver gets a specific package/source for this batch
+        pkg_name = package or source or "CNL Package"
+        
+        # Try direct add
+        logger.info(f"Attempting direct add to JD for package: {pkg_name}")
+        res = await api.add_links(links, package_name=pkg_name)
+        
+        if "ok" in res or "success" in res:
+            added_directly = True
+            logger.info("Direct add successful.")
+        else:
+            logger.warning(f"Direct add returned non-success: {res}")
+            
+    except Exception as e:
+        logger.warning(f"Direct add failed (JD likely offline): {e}")
+
+    if not added_directly:
+        # Buffer Links (as structured package) if direct add failed
+        buffer_data = []
+        if BUFFER_FILE.exists():
+            try:
+                with open(BUFFER_FILE) as f:
+                    buffer_data = json.load(f)
+            except:
+                buffer_data = []
+        
+        # Store as package object for grouped replay
+        package_entry = {
+            "package": package or source or "CNL Package",
+            "links": links,
+            "passwords": passwords
+        }
+        buffer_data.append(package_entry)
+        
+        try:
+            with open(BUFFER_FILE, "w") as f:
+                json.dump(buffer_data, f)
+            print("DEBUG: Links buffered (Offline Mode)")
+        except Exception as e:
+            print(f"DEBUG: Failed to write to buffer: {e}")
+            
+        logger.info("Links buffered.")
     
     # 4. Trigger Cross-Origin Success (Pixel/Iframe response)
     # JD usually just returns success.

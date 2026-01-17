@@ -43,9 +43,10 @@ async def check_and_replay_links():
 
     logger.info(f"CNL Replay Task Started. Buffer: {buffer_file}")
     
-    api = LocalJDownloaderAPI(settings.JD_API_URL if hasattr(settings, 'JD_API_URL') else "http://localhost:3128") 
-    # Note: We should ideally inject this, but for background task simple instantiation is okay if config is global.
-    # Let's use the one from settings or a default local one.
+    # Use settings_manager to get current URL (including runtime changes)
+    from src.infrastructure.settings_manager import settings_manager
+    current_settings = settings_manager.load_settings()
+    api = LocalJDownloaderAPI(current_settings.api_url)
     
     
     # DLC Buffer Setup
@@ -98,9 +99,25 @@ async def check_and_replay_links():
                                 links = [entry] if isinstance(entry, str) else entry
                             
                             if links:
+                                # Sanitize links to prevent TypeError if buffer contains objects
+                                # (e.g. from older bugs or malformed data)
+                                sanitized_links = []
+                                for link_item in links:
+                                    if isinstance(link_item, str):
+                                        sanitized_links.append(link_item)
+                                    elif isinstance(link_item, dict) and "url" in link_item:
+                                        sanitized_links.append(str(link_item["url"]))
+                                    # Ignore others
+                                links = sanitized_links
+                                
+                                if not links:
+                                    # If no valid links left, mark as success so we don't retry empty forever
+                                    continue
+
                                 try:
                                     res = await api.add_links(links, package_name=pkg_name)
                                     if "ok" not in res and "success" not in res:
+                                        logger.error(f"Replay failed for {pkg_name}: {res}")
                                         all_success = False
                                 except Exception as e:
                                     logger.error(f"Failed to replay package {pkg_name}: {e}")

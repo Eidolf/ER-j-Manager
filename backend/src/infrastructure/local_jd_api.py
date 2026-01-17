@@ -111,12 +111,13 @@ class LocalJDownloaderAPI(JDownloaderAPI):
         async with httpx.AsyncClient() as client:
             endpoint = "/linkgrabberv2/addLinks"
             # Ensure all links are strings to prevent TypeError
+            # Ensure all links are strings to prevent TypeError
             safe_links = []
-            for l in links:
-                if isinstance(l, dict) and "url" in l:
-                    safe_links.append(str(l["url"]))
+            for link_item in links:
+                if isinstance(link_item, dict) and "url" in link_item:
+                    safe_links.append(str(link_item["url"]))
                 else:
-                    safe_links.append(str(l))
+                    safe_links.append(str(link_item))
 
             payload = {
                 "links": "\n".join(safe_links),
