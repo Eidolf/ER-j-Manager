@@ -336,48 +336,53 @@ class LocalJDownloaderAPI(JDownloaderAPI):
 
     async def get_myjd_connection_status(self) -> dict:
         async with httpx.AsyncClient() as client:
+            # Helper to make RPC calls
+            async def call_rpc(endpoint: str, params: list = None):
+                payload = {"params": params} if params is not None else {}
+                resp = await client.post(f"{self.base_url}{endpoint}", json=payload)
+                resp.raise_for_status()
+                return resp.json()
+
+            # Helper to get config value
+            async def get_jd_config(iface: str, storage: str, key: str):
+                payload = {"params": [iface, storage, key]}
+                resp = await client.post(f"{self.base_url}/config/get", json=payload)
+                resp.raise_for_status()
+                return resp.json().get("data")
+
             try:
                 iface = "org.jdownloader.api.myjdownloader.MyJDownloaderSettings"
                 
-                # Helper to get config value
-                async def get_config(key):
-                    # RPC: [interface, storage(null), key]
-                    payload = {"params": [iface, None, key]}
-                    r = await client.post(f"{self.base_url}/config/get", json=payload)
-                    if r.status_code == 200:
-                        return r.json() 
-                    return None
-
                 # 1. Check AutoConnect
-                ac_resp = await get_config("AutoConnectEnabledV2")
-                auto_connect = ac_resp.get("data") if ac_resp else False
-                
-                if not auto_connect:
+                auto_connect = await get_jd_config(iface, None, "AutoConnectEnabledV2")
+                if auto_connect is False: # Explicit False check
                     return {"online": False, "status": "MyJD Disabled (AutoConnect Off)"}
 
                 # 2. Check Device Name
-                dn_resp = await get_config("DeviceName")
-                device_name = dn_resp.get("data") if dn_resp else None
-                
+                device_name = await get_jd_config(iface, None, "DeviceName")
                 if not device_name:
                     return {"online": False, "status": "Not Configured (No Device Name)"}
 
                 # 3. Check Latest Error
-                le_resp = await get_config("LatestError")
-                latest_error = le_resp.get("data") if le_resp else "Unknown"
-                
+                latest_error = await get_jd_config(iface, None, "LatestError")
                 if latest_error and str(latest_error) not in ["{}", "NONE", "null", "None"]:
                      return {"online": False, "status": f"Error: {latest_error}"}
 
-                # 4. FINAL CHECK: TCP Connection
-                # We defer to thread pool because socket/file io is blocking
-                loop = asyncio.get_running_loop()
-                is_connected = await loop.run_in_executor(None, self._check_tcp_sync)
-                
-                if not is_connected:
-                    return {"online": False, "status": "Disconnected (No Active Connection)"}
+                # 4. Check Direct Connection
+                # This helps distinguish "Online" from "Relay" or "Offline" better than just DeviceName
+                try:
+                    direct_resp = await call_rpc("/device/getDirectConnectionInfos")
+                    direct_mode = direct_resp.get("data", {}).get("mode", "NONE")
+                    
+                    if direct_mode != "NONE":
+                        return {"online": True, "status": f"Connected (Direct: {direct_mode})"}
+                except Exception:
+                    pass
 
-                return {"online": True, "status": f"Connected as {device_name}"}
+                # Fallback: We have a device name and no error, but no direct connection.
+                # It could be Relay (Connected) or Offline (but no error reported yet).
+                # We return "Online" to be optimistic like the user wanted, but clarify status.
+                return {"online": True, "status": f"Device: {device_name}"}
 
             except Exception as e:
                 return {"online": False, "status": f"Disconnected ({str(e)})"}

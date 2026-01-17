@@ -596,11 +596,26 @@ async def cnl_proxy_add(
 @router.get("/extension/edge.crx")
 async def get_edge_extension():
     """Serve the generated CRX extension for Android."""
-    # backend/src/api/v1/router.py -> ... -> backend
-    # Direct relative path since we know CWD is project root (backend)
-    crx_path = "static/edge.crx"
+    # Robust path resolution for Docker and Local
+    # We look for 'static/edge.crx' in the project root (backend/ or /app/)
     
-    if not os.path.exists(crx_path):
+    # 1. Try relative to CWD (works if CWD is correct)
+    candidates = [
+        Path("static/edge.crx"),
+        # 2. Try relative to this file: .../src/api/v1/router.py -> .../static/edge.crx
+        # Local: backend/src/api/v1/router.py -> backend/static/edge.crx (4 parents up)
+        Path(__file__).resolve().parent.parent.parent.parent / "static" / "edge.crx",
+        # Docker: /app/src/api/v1/router.py -> /app/static/edge.crx (4 parents up)
+        Path(__file__).resolve().parent.parent.parent.parent / "static" / "edge.crx"
+    ]
+
+    crx_path = None
+    for p in candidates:
+        if p.exists():
+            crx_path = p
+            break
+            
+    if not crx_path:
         raise HTTPException(status_code=404, detail="Extension file not found")
 
     return FileResponse(

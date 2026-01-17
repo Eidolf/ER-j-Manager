@@ -1,8 +1,0 @@
-{
-    "jd_host": "host.docker.internal",
-    "jd_port": 3128,
-    "use_mock": false,
-    "admin_password": "admin",
-    "default_download_path": "/home/dev/Downloads/jdm/<jd:packagename>",
-    "use_default_download_path": true
-}

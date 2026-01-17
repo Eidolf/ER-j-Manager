@@ -27,6 +27,9 @@ COPY docs ./docs
 # Copy built frontend assets
 COPY --from=frontend-builder /app/frontend/dist /app/static
 
+# Copy generated extension into static (merge with frontend)
+COPY backend/static/edge.crx /app/static/edge.crx
+
 # Env vars
 ENV PYTHONPATH=/app
 ENV PORT=13040
