@@ -1,9 +1,6 @@
 
-import asyncio
 import httpx
-import os
-import socket
-import struct
+
 
 from src.domain.models import DownloadStatus, Link, Package
 from src.infrastructure.api_interface import JDownloaderAPI
@@ -281,58 +278,7 @@ class LocalJDownloaderAPI(JDownloaderAPI):
             # /system/exitJD
             await client.post(f"{self.base_url}/system/exitJD")
 
-    def _check_tcp_sync(self) -> bool:
-        """Synchronous check for established connections to MyJD servers"""
-        try:
-            # 1. Resolve MyJD domains to IPs
-            domains = ["api.jdownloader.org", "my.jdownloader.org"]
-            target_hexes = set()
-            
-            for d in domains:
-                try:
-                    # Resolve IP (Family, Type, Proto, Canon, SockAddr)
-                    # We accept IPv4 for now as /proc/net/tcp is IPv4
-                    # (IPv6 would be /proc/net/tcp6)
-                    infos = socket.getaddrinfo(d, 443, socket.AF_INET)
-                    for info in infos:
-                        ip = info[4][0]
-                        try:
-                            # Convert IP to little-endian hex (as stored in /proc/net/tcp)
-                            packed = socket.inet_aton(ip)
-                            h = struct.unpack("<I", packed)[0]
-                            target_hexes.add(f"{h:08X}")
-                        except:
-                            pass
-                except:
-                    pass
-            
-            if not target_hexes:
-                # If DNS fails, we can't verify. Fail safe -> False?
-                # Or True? Use False to be strict.
-                return False
-
-            # 2. Scan /proc/net/tcp for established connections (01) to 443 (01BB) matching target IPs
-            if not os.path.exists("/proc/net/tcp"):
-                return False # Cannot check
-
-            with open("/proc/net/tcp", "r") as f:
-                next(f) # Skip header
-                for line in f:
-                    parts = line.strip().split()
-                    if len(parts) >= 4:
-                        # Format: sl local_address rem_address st ...
-                        remote = parts[2]
-                        state = parts[3]
-                        
-                        if state == "01": # ESTABLISHED
-                            rem_ip_hex, rem_port_hex = remote.split(":")
-                            if rem_port_hex == "01BB": # 443
-                                if rem_ip_hex in target_hexes:
-                                    return True
-            return False
-        except Exception as e:
-            print(f"TCP Check Error: {e}")
-            return False
+    # _check_tcp_sync removed (deprecated/unused in favor of Smart Status logic)
 
     async def get_myjd_connection_status(self) -> dict:
         async with httpx.AsyncClient() as client:
