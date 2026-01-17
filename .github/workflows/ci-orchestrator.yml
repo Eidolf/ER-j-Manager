@@ -9,10 +9,12 @@ on:
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/pull_request_template.md'
       - '.github/labeler.yml'
+      - 'docs/**'
   pull_request:
     branches: [ "main", "master" ]
     paths-ignore:
       - '**.md'
+      - 'docs/**'
 
 jobs:
   lint-backend:
