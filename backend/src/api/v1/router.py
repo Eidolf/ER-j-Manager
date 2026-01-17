@@ -632,6 +632,6 @@ async def get_edge_extension():
     return FileResponse(
         path=crx_path, 
         filename="edge.crx", 
-        media_type="application/octet-stream",
+        media_type="application/x-chrome-extension",
         headers={"Content-Disposition": "attachment; filename=edge.crx"}
     )

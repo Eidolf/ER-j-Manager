@@ -66,7 +66,17 @@ def pack_crx3(extension_dir, output_file, private_key_file):
             for file in files:
                 abs_path = os.path.join(root, file)
                 rel_path = os.path.relpath(abs_path, extension_dir)
-                zf.write(abs_path, rel_path)
+                
+                # Create ZipInfo to set permissions manually
+                # Python zipfile default permissions are sometimes 000
+                zi = zipfile.ZipInfo.from_file(abs_path, rel_path)
+                
+                # Set permissions to 644 (rw-r--r--)
+                # Use standard UNIX permission bitmask: (0o100000 | 0o644) << 16
+                zi.external_attr = (0o100644) << 16
+                
+                with open(abs_path, "rb") as f:
+                    zf.writestr(zi, f.read())
     
     with open(zip_path, "rb") as f:
         zip_data = f.read()
