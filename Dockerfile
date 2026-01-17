@@ -6,42 +6,35 @@ RUN npm ci
 COPY frontend/ .
 RUN npm run build
 
-# Stage 2: Build Extension
-FROM python:3.14-slim as extension-builder
-WORKDIR /app
-RUN apt-get update && apt-get install -y openssl
-COPY backend/static/extension_source ./extension_source
-COPY scripts/pack_crx3.py ./pack_crx.py
-# Generate CRX (creates temporary key automatically)
-RUN python pack_crx.py extension_source/jd-manager-extension edge.crx
-
-# Stage 3: Runtime
+# Stage 2: Runtime
+# We use a slimmer image for runtime
 FROM python:3.14-slim as runtime
 
-WORKDIR /app
-
-# Install system dependencies if needed (e.g. curl for healthcheck)
-# Note: Cleaning up apt lists to keep image small
+# Install system dependencies (curl for healthcheck)
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# Copy backend requirements
+WORKDIR /app
+
+# Install Python dependencies
 COPY backend/pyproject.toml backend/README.md ./
 RUN pip install --no-cache-dir .
 
-# Copy backend code
+# Copy Backend Code
 COPY backend/src ./src
 
-# Copy docs for Knowledge Base
+# Copy Documentation
 COPY docs ./docs
 
-# Copy built frontend assets
+# Copy Static Assets
+# 1. Frontend Build
 COPY --from=frontend-builder /app/frontend/dist /app/static
 
-# Copy generated extension into static
-COPY --from=extension-builder /app/edge.crx /app/static/edge.crx
+# 2. Browser Extension (Prebuilt)
+# We now use the manually provided CRX3 file as it is verified to work on Android
+COPY backend/static/edge.crx /app/static/edge.crx
 
-# Env vars
-ENV PYTHONPATH=/app
+# Create data directory
+RUN mkdir -p /app/datapp
 ENV PORT=13040
 
 # Run
