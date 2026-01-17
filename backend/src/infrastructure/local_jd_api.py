@@ -131,12 +131,17 @@ class LocalJDownloaderAPI(JDownloaderAPI):
                 print(f"[JD-API] Add Links Response: {resp.status_code} | {resp.text}")
                 
                 if resp.status_code != 200:
-                     print("[JD-API] Fallback to linkcollector/addLinks")
-                     resp = await client.post(f"{self.base_url}/linkcollector/addLinks", params={
-                        "links": ",".join(links),
+                     print(f"[JD-API] Error {resp.status_code}, trying fallback to linkcollector/addLinks")
+                     # Fallback params
+                     fb_params = {
+                        "links": ",".join(safe_links),
                         "autostart": False,
                         "deepDecrypt": True
-                     })
+                     }
+                     if package_name:
+                         fb_params["packageName"] = package_name
+                         
+                     resp = await client.post(f"{self.base_url}/linkcollector/addLinks", params=fb_params)
                      print(f"[JD-API] Fallback Response: {resp.status_code} | {resp.text}")
 
                 return "ok" if resp.status_code == 200 else f"error: {resp.text}"

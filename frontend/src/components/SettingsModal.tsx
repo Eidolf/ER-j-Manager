@@ -395,9 +395,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                                 >
                                                     <Download size={16} /> Download Extension (.crx)
                                                 </a>
-                                                <p className="text-gray-500 text-[10px] mt-2">
+                                                <p className="text-gray-500 text-[10px] mt-2 mb-4">
                                                     After downloading, open Edge Canary &rarr; Developer Options &rarr; "Extension install by crx" &rarr; Select the file.
                                                 </p>
+
+                                                <h4 className="font-bold text-white text-sm mb-1">Step C: Configuration</h4>
+                                                <div className="bg-black/20 p-3 rounded border border-white/5">
+                                                    <p className="text-xs text-gray-400 mb-1">Server URL:</p>
+                                                    <code className="block bg-black/50 px-2 py-1 rounded text-cyber-neon text-xs mb-3 font-mono break-all border border-gray-800">
+                                                        {window.location.origin}
+                                                    </code>
+
+                                                    <p className="text-xs text-gray-400 mb-1">Browser Auth Token:</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <code className="bg-black/50 px-2 py-1 rounded text-cyber-neon text-xs flex-1 font-mono break-all border border-gray-800">
+                                                            {localStorage.getItem('token') || 'Login required'}
+                                                        </code>
+                                                        <button
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText(localStorage.getItem('token') || '');
+                                                                setCopiedToken(true);
+                                                                setTimeout(() => setCopiedToken(false), 2000);
+                                                            }}
+                                                            className="p-1.5 bg-cyber-purple/20 hover:bg-cyber-purple/40 rounded text-cyber-neon transition-colors"
+                                                            title="Copy Token"
+                                                        >
+                                                            {copiedToken ? <Check size={14} /> : <Copy size={14} />}
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

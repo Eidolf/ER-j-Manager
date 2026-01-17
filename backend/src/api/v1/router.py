@@ -617,7 +617,9 @@ async def get_edge_extension():
         # Local: backend/src/api/v1/router.py -> backend/static/edge.crx (4 parents up)
         Path(__file__).resolve().parent.parent.parent.parent / "static" / "edge.crx",
         # Docker: /app/src/api/v1/router.py -> /app/static/edge.crx (4 parents up)
-        Path(__file__).resolve().parent.parent.parent.parent / "static" / "edge.crx"
+        Path(__file__).resolve().parent.parent.parent.parent / "static" / "edge.crx",
+        # Docker absolute path fallback
+        Path("/app/static/edge.crx")
     ]
 
     crx_path = None

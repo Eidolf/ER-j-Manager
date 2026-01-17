@@ -34,7 +34,7 @@ COPY --from=frontend-builder /app/frontend/dist /app/static
 COPY backend/static/edge.crx /app/static/edge.crx
 
 # Create data directory
-RUN mkdir -p /app/datapp
+RUN mkdir -p /app/data
 ENV PORT=13040
 
 # Run
