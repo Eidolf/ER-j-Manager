@@ -129,4 +129,4 @@ Avoid "trial-and-error" commits by running checks locally using the included scr
 
 ## License
 
-Proprietary / Internal Use Only.
+MIT
